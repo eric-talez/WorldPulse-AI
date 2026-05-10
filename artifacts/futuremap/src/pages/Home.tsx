@@ -6,10 +6,12 @@ import {
   useGetIssueSummary, 
   useGetDashboardStats,
   useGetCountry,
-  getGetCountryQueryKey
 } from "@workspace/api-client-react";
 import { Activity, AlertTriangle, TrendingUp, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+
+const countryDetailQueryKey = (code: string) =>
+  [`/api/countries/${code}`] as const;
 
 declare global {
   interface Window {
@@ -77,7 +79,7 @@ export default function Home() {
   const { data: issueSummary } = useGetIssueSummary();
   const { data: countries } = useListCountries();
   const { data: countryDetail, isLoading: isLoadingCountry } = useGetCountry(selectedCountryCode || "", {
-    query: { enabled: !!selectedCountryCode, queryKey: getGetCountryQueryKey(selectedCountryCode || "") }
+    query: { enabled: !!selectedCountryCode, queryKey: countryDetailQueryKey(selectedCountryCode || "") }
   });
 
   useEffect(() => {
