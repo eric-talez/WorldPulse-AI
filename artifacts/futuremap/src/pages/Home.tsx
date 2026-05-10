@@ -55,7 +55,7 @@ const CATEGORY_LABEL_EN: Record<string, string> = {
   disease: "Disease",
   tech: "Tech",
   news: "News",
-  natural_disaster: "Disaster",
+  natural_disaster: "Natural Disaster",
   cyber: "Cyber",
   terror: "Terror",
   climate: "Climate",
