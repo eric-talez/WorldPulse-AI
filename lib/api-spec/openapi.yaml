@@ -14,6 +14,8 @@ tags:
   - name: jobs
   - name: forum
   - name: dashboard
+  - name: auth
+  - name: payments
 paths:
   /healthz:
     get:
@@ -188,6 +190,214 @@ paths:
               schema:
                 $ref: "#/components/schemas/ForumPost"
 
+  /auth/nonce:
+    post:
+      operationId: createAuthNonce
+      tags: [auth]
+      summary: Issue a nonce for SIWE wallet sign-in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthNonceInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthNonce"
+
+  /auth/verify:
+    post:
+      operationId: verifyAuthSignature
+      tags: [auth]
+      summary: Verify a SIWE signed message and create a session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthVerifyInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+        "401":
+          description: Invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Clear the active session
+      responses:
+        "204":
+          description: No Content
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Return the current logged-in user (or null)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUserResponse"
+
+  /payments/orders:
+    post:
+      operationId: createPaypalOrder
+      tags: [payments]
+      summary: Create a one-time PayPal order for a plan upgrade
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrderResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /payments/orders/{orderId}/capture:
+    post:
+      operationId: capturePaypalOrder
+      tags: [payments]
+      summary: Capture an approved one-time PayPal order
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /payments/subscriptions:
+    post:
+      operationId: createPaypalSubscription
+      tags: [payments]
+      summary: Create a recurring PayPal subscription for a plan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubscriptionInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateSubscriptionResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /payments/subscriptions/{subscriptionId}/activate:
+    post:
+      operationId: activatePaypalSubscription
+      tags: [payments]
+      summary: Mark an approved PayPal subscription as active and upgrade the user
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+
+  /payments/subscriptions/{subscriptionId}/cancel:
+    post:
+      operationId: cancelPaypalSubscription
+      tags: [payments]
+      summary: Cancel an active PayPal subscription
+      parameters:
+        - in: path
+          name: subscriptionId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+
+  /payments/config:
+    get:
+      operationId: getPaymentsConfig
+      tags: [payments]
+      summary: Return the public PayPal config the frontend needs (client ID, plan IDs, env)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentsConfig"
+
+  /payments/webhook:
+    post:
+      operationId: paypalWebhook
+      tags: [payments]
+      summary: Receive PayPal webhook events for subscription/payment lifecycle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaypalWebhookEvent"
+      responses:
+        "200":
+          description: Acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookAck"
+
   /dashboard/stats:
     get:
       operationId: getDashboardStats
@@ -340,6 +550,134 @@ components:
         author: { type: string, minLength: 1 }
         title: { type: string, minLength: 1 }
         body: { type: string }
+
+    AuthNonceInput:
+      type: object
+      required: [walletAddress]
+      properties:
+        walletAddress: { type: string, minLength: 42, maxLength: 42 }
+
+    AuthNonce:
+      type: object
+      required: [nonce, message]
+      properties:
+        nonce: { type: string }
+        message: { type: string, description: "Full SIWE message the wallet must sign" }
+
+    AuthVerifyInput:
+      type: object
+      required: [message, signature]
+      properties:
+        message: { type: string }
+        signature: { type: string }
+
+    UserTier:
+      type: string
+      enum: [free, pro, enterprise]
+
+    CurrentUser:
+      type: object
+      required: [walletAddress, tier, createdAt, lastLoginAt]
+      properties:
+        walletAddress: { type: string }
+        tier: { $ref: "#/components/schemas/UserTier" }
+        createdAt: { type: string, format: date-time }
+        lastLoginAt: { type: string, format: date-time }
+        activeSubscription:
+          oneOf:
+            - $ref: "#/components/schemas/ActiveSubscription"
+            - type: "null"
+
+    ActiveSubscription:
+      type: object
+      required: [paypalSubscriptionId, plan, status]
+      properties:
+        paypalSubscriptionId: { type: string }
+        plan: { $ref: "#/components/schemas/UserTier" }
+        status: { type: string }
+        nextBillingAt:
+          oneOf:
+            - { type: string, format: date-time }
+            - { type: "null" }
+
+    CurrentUserResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/CurrentUser"
+            - type: "null"
+
+    PlanId:
+      type: string
+      enum: [pro, enterprise]
+
+    CreateOrderInput:
+      type: object
+      required: [plan]
+      properties:
+        plan: { $ref: "#/components/schemas/PlanId" }
+
+    CreateOrderResponse:
+      type: object
+      required: [orderId]
+      properties:
+        orderId: { type: string }
+
+    CreateSubscriptionInput:
+      type: object
+      required: [plan]
+      properties:
+        plan: { $ref: "#/components/schemas/PlanId" }
+
+    CreateSubscriptionResponse:
+      type: object
+      required: [subscriptionId, approveUrl]
+      properties:
+        subscriptionId: { type: string }
+        approveUrl: { type: string }
+
+    PaymentsConfig:
+      type: object
+      required: [clientId, env, plans]
+      properties:
+        clientId:
+          oneOf:
+            - { type: string }
+            - { type: "null" }
+        env:
+          type: string
+          enum: [sandbox, live]
+        plans:
+          type: object
+          required: [pro, enterprise]
+          properties:
+            pro: { $ref: "#/components/schemas/PlanInfo" }
+            enterprise: { $ref: "#/components/schemas/PlanInfo" }
+
+    PaypalWebhookEvent:
+      type: object
+      required: [id, event_type]
+      properties:
+        id: { type: string }
+        event_type: { type: string }
+        resource:
+          type: object
+          additionalProperties: true
+
+    WebhookAck:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
+
+    PlanInfo:
+      type: object
+      required: [priceUsd, hasSubscriptionPlan]
+      properties:
+        priceUsd: { type: integer }
+        hasSubscriptionPlan: { type: boolean }
 
     DashboardStats:
       type: object

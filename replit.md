@@ -11,6 +11,8 @@ A bilingual (KO/EN) global issue map and AI-driven job future report platform. U
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
+- Required secret: `SESSION_SECRET` — HMAC key for signed auth/nonce cookies
+- Optional PayPal env (gracefully disabled if missing): `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_ENV` (`sandbox`|`live`, default sandbox), `PAYPAL_PLAN_ID_PRO`, `PAYPAL_PLAN_ID_ENTERPRISE`
 
 ## Stack
 
@@ -24,8 +26,10 @@ A bilingual (KO/EN) global issue map and AI-driven job future report platform. U
 ## Where things live
 
 - API spec: `lib/api-spec/openapi.yaml` (single source of truth)
-- DB schema: `lib/db/src/schema/` — `countries`, `issues`, `jobReports`, `forumPosts`
-- API routes: `artifacts/api-server/src/routes/` — `countries`, `issues`, `jobs`, `forum`, `dashboard`, `health`
+- DB schema: `lib/db/src/schema/` — `countries`, `issues`, `jobReports`, `forumPosts`, `users`, `paymentSessions`, `subscriptions`
+- API routes: `artifacts/api-server/src/routes/` — `countries`, `issues`, `jobs`, `forum`, `dashboard`, `health`, `auth`, `payments`
+- Auth/payments libs: `artifacts/api-server/src/lib/` — `session.ts` (HMAC-signed cookie session + nonce), `paypal.ts` (REST client + webhook verify), `userTier.ts` (user upsert + tier helpers)
+- Frontend auth: `artifacts/futuremap/src/lib/auth.tsx` (AuthProvider, useAuth), `lib/wallet.ts` (window.ethereum + viem), `components/layout/WalletButton.tsx`
 - Job analysis heuristic: `artifacts/api-server/src/lib/jobAnalysis.ts` — keyword classify (tax/dev/nurse/marketing/designer/default) → JobProfile
 - Frontend pages: `artifacts/futuremap/src/pages/` — `Home` (globe + signal stream), `JobReport`, `Forum`, `About`
 - Frontend i18n: `artifacts/futuremap/src/lib/language.tsx`
@@ -37,13 +41,16 @@ A bilingual (KO/EN) global issue map and AI-driven job future report platform. U
 - Job future analysis is a deterministic keyword-based heuristic, not an LLM call — keeps the platform offline-friendly and instant. Country-specific opportunities are templated per ISO code with a default fallback.
 - Country detail page derives top-risk / top-growth jobs from the running average of recent `jobReports` for that country, with a curated fallback list when no reports exist yet.
 - Bilingual UI is client-side only — Korean strings are the primary copy and sit alongside English in a small dictionary in `lib/language.tsx`. Country `nameKo` is also persisted in the DB.
+- Auth = SIWE-style wallet sign-in. Nonce is issued in an HMAC-signed httpOnly cookie (so the server is stateless), the wallet signs a SIWE message containing the nonce, and the server verifies via viem's `verifyMessage`. Session is a separate signed cookie carrying the lowercase wallet address. No `siwe` npm package — it pulls ethers as a peer dep; rolling our own SIWE message is two dozen lines.
+- Payments = PayPal REST API called directly from `lib/paypal.ts` (no SDK). Frontend uses `@paypal/react-paypal-js` for the buttons. Subscriptions require pre-created PayPal billing plans; their IDs are read from env vars and the public `/payments/config` exposes whether each plan is configured so the UI can hide unsupported flows.
 
 ## Product
 
 - `/` — 3D globe with country pins colored by risk score; click a pin → country panel with summary, top automation-risk jobs, top growth jobs. Live signal stream of recent issues, filterable by category (news / conflict / disease / politics / economy / culture / ai_jobs / tech). Stats ribbon (countries / issues today / reports generated).
 - `/job` — Type a job + pick a country → AI future report (automation risk %, growth %, automated tasks, human strengths, future changes, recommended skills, country-specific opportunities). Recently generated reports rail.
 - `/forum` — Country-segmented discussion board with post composer.
-- `/about` — Manifesto + pricing tiers (Free / Pro / Enterprise).
+- `/about` — Manifesto + pricing tiers (Free / Pro / Enterprise) with PayPal checkout (monthly subscription or one-time) gated on wallet connection.
+- Header — wallet connect button (MetaMask et al.) showing short address + tier badge once signed in.
 
 ## User preferences
 

@@ -153,6 +153,112 @@ export interface ForumPostInput {
   body?: string;
 }
 
+export interface AuthNonceInput {
+  /**
+   * @minLength 42
+   * @maxLength 42
+   */
+  walletAddress: string;
+}
+
+export interface AuthNonce {
+  nonce: string;
+  /** Full SIWE message the wallet must sign */
+  message: string;
+}
+
+export interface AuthVerifyInput {
+  message: string;
+  signature: string;
+}
+
+export type UserTier = (typeof UserTier)[keyof typeof UserTier];
+
+export const UserTier = {
+  free: "free",
+  pro: "pro",
+  enterprise: "enterprise",
+} as const;
+
+export interface ActiveSubscription {
+  paypalSubscriptionId: string;
+  plan: UserTier;
+  status: string;
+  nextBillingAt?: string | null;
+}
+
+export interface CurrentUser {
+  walletAddress: string;
+  tier: UserTier;
+  createdAt: string;
+  lastLoginAt: string;
+  activeSubscription?: ActiveSubscription | null;
+}
+
+export interface CurrentUserResponse {
+  user: CurrentUser | null;
+}
+
+export type PlanId = (typeof PlanId)[keyof typeof PlanId];
+
+export const PlanId = {
+  pro: "pro",
+  enterprise: "enterprise",
+} as const;
+
+export interface CreateOrderInput {
+  plan: PlanId;
+}
+
+export interface CreateOrderResponse {
+  orderId: string;
+}
+
+export interface CreateSubscriptionInput {
+  plan: PlanId;
+}
+
+export interface CreateSubscriptionResponse {
+  subscriptionId: string;
+  approveUrl: string;
+}
+
+export type PaymentsConfigEnv =
+  (typeof PaymentsConfigEnv)[keyof typeof PaymentsConfigEnv];
+
+export const PaymentsConfigEnv = {
+  sandbox: "sandbox",
+  live: "live",
+} as const;
+
+export interface PlanInfo {
+  priceUsd: number;
+  hasSubscriptionPlan: boolean;
+}
+
+export type PaymentsConfigPlans = {
+  pro: PlanInfo;
+  enterprise: PlanInfo;
+};
+
+export interface PaymentsConfig {
+  clientId: string | null;
+  env: PaymentsConfigEnv;
+  plans: PaymentsConfigPlans;
+}
+
+export type PaypalWebhookEventResource = { [key: string]: unknown };
+
+export interface PaypalWebhookEvent {
+  id: string;
+  event_type: string;
+  resource?: PaypalWebhookEventResource;
+}
+
+export interface WebhookAck {
+  ok: boolean;
+}
+
 export interface DashboardStats {
   countriesTracked: number;
   issuesToday: number;

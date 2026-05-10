@@ -17,9 +17,18 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AuthNonce,
+  AuthNonceInput,
+  AuthVerifyInput,
   CategoryCount,
   Country,
   CountryDetail,
+  CreateOrderInput,
+  CreateOrderResponse,
+  CreateSubscriptionInput,
+  CreateSubscriptionResponse,
+  CurrentUser,
+  CurrentUserResponse,
   DashboardStats,
   ErrorResponse,
   ForumPost,
@@ -31,6 +40,9 @@ import type {
   ListForumPostsParams,
   ListIssuesParams,
   ListRecentJobReportsParams,
+  PaymentsConfig,
+  PaypalWebhookEvent,
+  WebhookAck,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -812,6 +824,927 @@ export const useCreateForumPost = <
   TContext
 > => {
   return useMutation(getCreateForumPostMutationOptions(options));
+};
+
+/**
+ * @summary Issue a nonce for SIWE wallet sign-in
+ */
+export const getCreateAuthNonceUrl = () => {
+  return `/api/auth/nonce`;
+};
+
+export const createAuthNonce = async (
+  authNonceInput: AuthNonceInput,
+  options?: RequestInit,
+): Promise<AuthNonce> => {
+  return customFetch<AuthNonce>(getCreateAuthNonceUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(authNonceInput),
+  });
+};
+
+export const getCreateAuthNonceMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createAuthNonce>>,
+    TError,
+    { data: BodyType<AuthNonceInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createAuthNonce>>,
+  TError,
+  { data: BodyType<AuthNonceInput> },
+  TContext
+> => {
+  const mutationKey = ["createAuthNonce"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createAuthNonce>>,
+    { data: BodyType<AuthNonceInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createAuthNonce(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateAuthNonceMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createAuthNonce>>
+>;
+export type CreateAuthNonceMutationBody = BodyType<AuthNonceInput>;
+export type CreateAuthNonceMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Issue a nonce for SIWE wallet sign-in
+ */
+export const useCreateAuthNonce = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createAuthNonce>>,
+    TError,
+    { data: BodyType<AuthNonceInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createAuthNonce>>,
+  TError,
+  { data: BodyType<AuthNonceInput> },
+  TContext
+> => {
+  return useMutation(getCreateAuthNonceMutationOptions(options));
+};
+
+/**
+ * @summary Verify a SIWE signed message and create a session
+ */
+export const getVerifyAuthSignatureUrl = () => {
+  return `/api/auth/verify`;
+};
+
+export const verifyAuthSignature = async (
+  authVerifyInput: AuthVerifyInput,
+  options?: RequestInit,
+): Promise<CurrentUser> => {
+  return customFetch<CurrentUser>(getVerifyAuthSignatureUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(authVerifyInput),
+  });
+};
+
+export const getVerifyAuthSignatureMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof verifyAuthSignature>>,
+    TError,
+    { data: BodyType<AuthVerifyInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof verifyAuthSignature>>,
+  TError,
+  { data: BodyType<AuthVerifyInput> },
+  TContext
+> => {
+  const mutationKey = ["verifyAuthSignature"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof verifyAuthSignature>>,
+    { data: BodyType<AuthVerifyInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return verifyAuthSignature(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type VerifyAuthSignatureMutationResult = NonNullable<
+  Awaited<ReturnType<typeof verifyAuthSignature>>
+>;
+export type VerifyAuthSignatureMutationBody = BodyType<AuthVerifyInput>;
+export type VerifyAuthSignatureMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Verify a SIWE signed message and create a session
+ */
+export const useVerifyAuthSignature = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof verifyAuthSignature>>,
+    TError,
+    { data: BodyType<AuthVerifyInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof verifyAuthSignature>>,
+  TError,
+  { data: BodyType<AuthVerifyInput> },
+  TContext
+> => {
+  return useMutation(getVerifyAuthSignatureMutationOptions(options));
+};
+
+/**
+ * @summary Clear the active session
+ */
+export const getLogoutUrl = () => {
+  return `/api/auth/logout`;
+};
+
+export const logout = async (options?: RequestInit): Promise<void> => {
+  return customFetch<void>(getLogoutUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getLogoutMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logout>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof logout>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["logout"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof logout>>,
+    void
+  > = () => {
+    return logout(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type LogoutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof logout>>
+>;
+
+export type LogoutMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Clear the active session
+ */
+export const useLogout = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof logout>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof logout>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getLogoutMutationOptions(options));
+};
+
+/**
+ * @summary Return the current logged-in user (or null)
+ */
+export const getGetCurrentUserUrl = () => {
+  return `/api/auth/me`;
+};
+
+export const getCurrentUser = async (
+  options?: RequestInit,
+): Promise<CurrentUserResponse> => {
+  return customFetch<CurrentUserResponse>(getGetCurrentUserUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCurrentUserQueryKey = () => {
+  return [`/api/auth/me`] as const;
+};
+
+export const getGetCurrentUserQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCurrentUser>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCurrentUser>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCurrentUserQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCurrentUser>>> = ({
+    signal,
+  }) => getCurrentUser({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCurrentUser>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCurrentUserQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCurrentUser>>
+>;
+export type GetCurrentUserQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Return the current logged-in user (or null)
+ */
+
+export function useGetCurrentUser<
+  TData = Awaited<ReturnType<typeof getCurrentUser>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getCurrentUser>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCurrentUserQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a one-time PayPal order for a plan upgrade
+ */
+export const getCreatePaypalOrderUrl = () => {
+  return `/api/payments/orders`;
+};
+
+export const createPaypalOrder = async (
+  createOrderInput: CreateOrderInput,
+  options?: RequestInit,
+): Promise<CreateOrderResponse> => {
+  return customFetch<CreateOrderResponse>(getCreatePaypalOrderUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createOrderInput),
+  });
+};
+
+export const getCreatePaypalOrderMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPaypalOrder>>,
+    TError,
+    { data: BodyType<CreateOrderInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createPaypalOrder>>,
+  TError,
+  { data: BodyType<CreateOrderInput> },
+  TContext
+> => {
+  const mutationKey = ["createPaypalOrder"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createPaypalOrder>>,
+    { data: BodyType<CreateOrderInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createPaypalOrder(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreatePaypalOrderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createPaypalOrder>>
+>;
+export type CreatePaypalOrderMutationBody = BodyType<CreateOrderInput>;
+export type CreatePaypalOrderMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a one-time PayPal order for a plan upgrade
+ */
+export const useCreatePaypalOrder = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPaypalOrder>>,
+    TError,
+    { data: BodyType<CreateOrderInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createPaypalOrder>>,
+  TError,
+  { data: BodyType<CreateOrderInput> },
+  TContext
+> => {
+  return useMutation(getCreatePaypalOrderMutationOptions(options));
+};
+
+/**
+ * @summary Capture an approved one-time PayPal order
+ */
+export const getCapturePaypalOrderUrl = (orderId: string) => {
+  return `/api/payments/orders/${orderId}/capture`;
+};
+
+export const capturePaypalOrder = async (
+  orderId: string,
+  options?: RequestInit,
+): Promise<CurrentUser> => {
+  return customFetch<CurrentUser>(getCapturePaypalOrderUrl(orderId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getCapturePaypalOrderMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof capturePaypalOrder>>,
+    TError,
+    { orderId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof capturePaypalOrder>>,
+  TError,
+  { orderId: string },
+  TContext
+> => {
+  const mutationKey = ["capturePaypalOrder"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof capturePaypalOrder>>,
+    { orderId: string }
+  > = (props) => {
+    const { orderId } = props ?? {};
+
+    return capturePaypalOrder(orderId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CapturePaypalOrderMutationResult = NonNullable<
+  Awaited<ReturnType<typeof capturePaypalOrder>>
+>;
+
+export type CapturePaypalOrderMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Capture an approved one-time PayPal order
+ */
+export const useCapturePaypalOrder = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof capturePaypalOrder>>,
+    TError,
+    { orderId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof capturePaypalOrder>>,
+  TError,
+  { orderId: string },
+  TContext
+> => {
+  return useMutation(getCapturePaypalOrderMutationOptions(options));
+};
+
+/**
+ * @summary Create a recurring PayPal subscription for a plan
+ */
+export const getCreatePaypalSubscriptionUrl = () => {
+  return `/api/payments/subscriptions`;
+};
+
+export const createPaypalSubscription = async (
+  createSubscriptionInput: CreateSubscriptionInput,
+  options?: RequestInit,
+): Promise<CreateSubscriptionResponse> => {
+  return customFetch<CreateSubscriptionResponse>(
+    getCreatePaypalSubscriptionUrl(),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createSubscriptionInput),
+    },
+  );
+};
+
+export const getCreatePaypalSubscriptionMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPaypalSubscription>>,
+    TError,
+    { data: BodyType<CreateSubscriptionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createPaypalSubscription>>,
+  TError,
+  { data: BodyType<CreateSubscriptionInput> },
+  TContext
+> => {
+  const mutationKey = ["createPaypalSubscription"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createPaypalSubscription>>,
+    { data: BodyType<CreateSubscriptionInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createPaypalSubscription(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreatePaypalSubscriptionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createPaypalSubscription>>
+>;
+export type CreatePaypalSubscriptionMutationBody =
+  BodyType<CreateSubscriptionInput>;
+export type CreatePaypalSubscriptionMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a recurring PayPal subscription for a plan
+ */
+export const useCreatePaypalSubscription = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPaypalSubscription>>,
+    TError,
+    { data: BodyType<CreateSubscriptionInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createPaypalSubscription>>,
+  TError,
+  { data: BodyType<CreateSubscriptionInput> },
+  TContext
+> => {
+  return useMutation(getCreatePaypalSubscriptionMutationOptions(options));
+};
+
+/**
+ * @summary Mark an approved PayPal subscription as active and upgrade the user
+ */
+export const getActivatePaypalSubscriptionUrl = (subscriptionId: string) => {
+  return `/api/payments/subscriptions/${subscriptionId}/activate`;
+};
+
+export const activatePaypalSubscription = async (
+  subscriptionId: string,
+  options?: RequestInit,
+): Promise<CurrentUser> => {
+  return customFetch<CurrentUser>(
+    getActivatePaypalSubscriptionUrl(subscriptionId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getActivatePaypalSubscriptionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof activatePaypalSubscription>>,
+    TError,
+    { subscriptionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof activatePaypalSubscription>>,
+  TError,
+  { subscriptionId: string },
+  TContext
+> => {
+  const mutationKey = ["activatePaypalSubscription"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof activatePaypalSubscription>>,
+    { subscriptionId: string }
+  > = (props) => {
+    const { subscriptionId } = props ?? {};
+
+    return activatePaypalSubscription(subscriptionId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ActivatePaypalSubscriptionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof activatePaypalSubscription>>
+>;
+
+export type ActivatePaypalSubscriptionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Mark an approved PayPal subscription as active and upgrade the user
+ */
+export const useActivatePaypalSubscription = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof activatePaypalSubscription>>,
+    TError,
+    { subscriptionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof activatePaypalSubscription>>,
+  TError,
+  { subscriptionId: string },
+  TContext
+> => {
+  return useMutation(getActivatePaypalSubscriptionMutationOptions(options));
+};
+
+/**
+ * @summary Cancel an active PayPal subscription
+ */
+export const getCancelPaypalSubscriptionUrl = (subscriptionId: string) => {
+  return `/api/payments/subscriptions/${subscriptionId}/cancel`;
+};
+
+export const cancelPaypalSubscription = async (
+  subscriptionId: string,
+  options?: RequestInit,
+): Promise<CurrentUser> => {
+  return customFetch<CurrentUser>(
+    getCancelPaypalSubscriptionUrl(subscriptionId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCancelPaypalSubscriptionMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelPaypalSubscription>>,
+    TError,
+    { subscriptionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof cancelPaypalSubscription>>,
+  TError,
+  { subscriptionId: string },
+  TContext
+> => {
+  const mutationKey = ["cancelPaypalSubscription"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof cancelPaypalSubscription>>,
+    { subscriptionId: string }
+  > = (props) => {
+    const { subscriptionId } = props ?? {};
+
+    return cancelPaypalSubscription(subscriptionId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CancelPaypalSubscriptionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof cancelPaypalSubscription>>
+>;
+
+export type CancelPaypalSubscriptionMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Cancel an active PayPal subscription
+ */
+export const useCancelPaypalSubscription = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof cancelPaypalSubscription>>,
+    TError,
+    { subscriptionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof cancelPaypalSubscription>>,
+  TError,
+  { subscriptionId: string },
+  TContext
+> => {
+  return useMutation(getCancelPaypalSubscriptionMutationOptions(options));
+};
+
+/**
+ * @summary Return the public PayPal config the frontend needs (client ID, plan IDs, env)
+ */
+export const getGetPaymentsConfigUrl = () => {
+  return `/api/payments/config`;
+};
+
+export const getPaymentsConfig = async (
+  options?: RequestInit,
+): Promise<PaymentsConfig> => {
+  return customFetch<PaymentsConfig>(getGetPaymentsConfigUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetPaymentsConfigQueryKey = () => {
+  return [`/api/payments/config`] as const;
+};
+
+export const getGetPaymentsConfigQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPaymentsConfig>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPaymentsConfig>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPaymentsConfigQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPaymentsConfig>>
+  > = ({ signal }) => getPaymentsConfig({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPaymentsConfig>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPaymentsConfigQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPaymentsConfig>>
+>;
+export type GetPaymentsConfigQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Return the public PayPal config the frontend needs (client ID, plan IDs, env)
+ */
+
+export function useGetPaymentsConfig<
+  TData = Awaited<ReturnType<typeof getPaymentsConfig>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getPaymentsConfig>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPaymentsConfigQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Receive PayPal webhook events for subscription/payment lifecycle
+ */
+export const getPaypalWebhookUrl = () => {
+  return `/api/payments/webhook`;
+};
+
+export const paypalWebhook = async (
+  paypalWebhookEvent: PaypalWebhookEvent,
+  options?: RequestInit,
+): Promise<WebhookAck> => {
+  return customFetch<WebhookAck>(getPaypalWebhookUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(paypalWebhookEvent),
+  });
+};
+
+export const getPaypalWebhookMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof paypalWebhook>>,
+    TError,
+    { data: BodyType<PaypalWebhookEvent> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof paypalWebhook>>,
+  TError,
+  { data: BodyType<PaypalWebhookEvent> },
+  TContext
+> => {
+  const mutationKey = ["paypalWebhook"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof paypalWebhook>>,
+    { data: BodyType<PaypalWebhookEvent> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return paypalWebhook(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PaypalWebhookMutationResult = NonNullable<
+  Awaited<ReturnType<typeof paypalWebhook>>
+>;
+export type PaypalWebhookMutationBody = BodyType<PaypalWebhookEvent>;
+export type PaypalWebhookMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Receive PayPal webhook events for subscription/payment lifecycle
+ */
+export const usePaypalWebhook = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof paypalWebhook>>,
+    TError,
+    { data: BodyType<PaypalWebhookEvent> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof paypalWebhook>>,
+  TError,
+  { data: BodyType<PaypalWebhookEvent> },
+  TContext
+> => {
+  return useMutation(getPaypalWebhookMutationOptions(options));
 };
 
 /**

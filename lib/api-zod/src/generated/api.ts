@@ -283,6 +283,207 @@ export const CreateForumPostBody = zod.object({
 });
 
 /**
+ * @summary Issue a nonce for SIWE wallet sign-in
+ */
+export const createAuthNonceBodyWalletAddressMin = 42;
+export const createAuthNonceBodyWalletAddressMax = 42;
+
+export const CreateAuthNonceBody = zod.object({
+  walletAddress: zod
+    .string()
+    .min(createAuthNonceBodyWalletAddressMin)
+    .max(createAuthNonceBodyWalletAddressMax),
+});
+
+export const CreateAuthNonceResponse = zod.object({
+  nonce: zod.string(),
+  message: zod.string().describe("Full SIWE message the wallet must sign"),
+});
+
+/**
+ * @summary Verify a SIWE signed message and create a session
+ */
+export const VerifyAuthSignatureBody = zod.object({
+  message: zod.string(),
+  signature: zod.string(),
+});
+
+export const VerifyAuthSignatureResponse = zod.object({
+  walletAddress: zod.string(),
+  tier: zod.enum(["free", "pro", "enterprise"]),
+  createdAt: zod.coerce.date(),
+  lastLoginAt: zod.coerce.date(),
+  activeSubscription: zod
+    .union([
+      zod.object({
+        paypalSubscriptionId: zod.string(),
+        plan: zod.enum(["free", "pro", "enterprise"]),
+        status: zod.string(),
+        nextBillingAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+});
+
+/**
+ * @summary Return the current logged-in user (or null)
+ */
+export const GetCurrentUserResponse = zod.object({
+  user: zod.union([
+    zod.object({
+      walletAddress: zod.string(),
+      tier: zod.enum(["free", "pro", "enterprise"]),
+      createdAt: zod.coerce.date(),
+      lastLoginAt: zod.coerce.date(),
+      activeSubscription: zod
+        .union([
+          zod.object({
+            paypalSubscriptionId: zod.string(),
+            plan: zod.enum(["free", "pro", "enterprise"]),
+            status: zod.string(),
+            nextBillingAt: zod
+              .union([zod.coerce.date(), zod.null()])
+              .optional(),
+          }),
+          zod.null(),
+        ])
+        .optional(),
+    }),
+    zod.null(),
+  ]),
+});
+
+/**
+ * @summary Create a one-time PayPal order for a plan upgrade
+ */
+export const CreatePaypalOrderBody = zod.object({
+  plan: zod.enum(["pro", "enterprise"]),
+});
+
+export const CreatePaypalOrderResponse = zod.object({
+  orderId: zod.string(),
+});
+
+/**
+ * @summary Capture an approved one-time PayPal order
+ */
+export const CapturePaypalOrderParams = zod.object({
+  orderId: zod.coerce.string(),
+});
+
+export const CapturePaypalOrderResponse = zod.object({
+  walletAddress: zod.string(),
+  tier: zod.enum(["free", "pro", "enterprise"]),
+  createdAt: zod.coerce.date(),
+  lastLoginAt: zod.coerce.date(),
+  activeSubscription: zod
+    .union([
+      zod.object({
+        paypalSubscriptionId: zod.string(),
+        plan: zod.enum(["free", "pro", "enterprise"]),
+        status: zod.string(),
+        nextBillingAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+});
+
+/**
+ * @summary Create a recurring PayPal subscription for a plan
+ */
+export const CreatePaypalSubscriptionBody = zod.object({
+  plan: zod.enum(["pro", "enterprise"]),
+});
+
+export const CreatePaypalSubscriptionResponse = zod.object({
+  subscriptionId: zod.string(),
+  approveUrl: zod.string(),
+});
+
+/**
+ * @summary Mark an approved PayPal subscription as active and upgrade the user
+ */
+export const ActivatePaypalSubscriptionParams = zod.object({
+  subscriptionId: zod.coerce.string(),
+});
+
+export const ActivatePaypalSubscriptionResponse = zod.object({
+  walletAddress: zod.string(),
+  tier: zod.enum(["free", "pro", "enterprise"]),
+  createdAt: zod.coerce.date(),
+  lastLoginAt: zod.coerce.date(),
+  activeSubscription: zod
+    .union([
+      zod.object({
+        paypalSubscriptionId: zod.string(),
+        plan: zod.enum(["free", "pro", "enterprise"]),
+        status: zod.string(),
+        nextBillingAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+});
+
+/**
+ * @summary Cancel an active PayPal subscription
+ */
+export const CancelPaypalSubscriptionParams = zod.object({
+  subscriptionId: zod.coerce.string(),
+});
+
+export const CancelPaypalSubscriptionResponse = zod.object({
+  walletAddress: zod.string(),
+  tier: zod.enum(["free", "pro", "enterprise"]),
+  createdAt: zod.coerce.date(),
+  lastLoginAt: zod.coerce.date(),
+  activeSubscription: zod
+    .union([
+      zod.object({
+        paypalSubscriptionId: zod.string(),
+        plan: zod.enum(["free", "pro", "enterprise"]),
+        status: zod.string(),
+        nextBillingAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
+});
+
+/**
+ * @summary Return the public PayPal config the frontend needs (client ID, plan IDs, env)
+ */
+export const GetPaymentsConfigResponse = zod.object({
+  clientId: zod.union([zod.string(), zod.null()]),
+  env: zod.enum(["sandbox", "live"]),
+  plans: zod.object({
+    pro: zod.object({
+      priceUsd: zod.number(),
+      hasSubscriptionPlan: zod.boolean(),
+    }),
+    enterprise: zod.object({
+      priceUsd: zod.number(),
+      hasSubscriptionPlan: zod.boolean(),
+    }),
+  }),
+});
+
+/**
+ * @summary Receive PayPal webhook events for subscription/payment lifecycle
+ */
+export const PaypalWebhookBody = zod.object({
+  id: zod.string(),
+  event_type: zod.string(),
+  resource: zod.record(zod.string(), zod.unknown()).optional(),
+});
+
+export const PaypalWebhookResponse = zod.object({
+  ok: zod.boolean(),
+});
+
+/**
  * @summary Top-level platform stats — total countries, issues, jobs analyzed, forum posts
  */
 export const GetDashboardStatsResponse = zod.object({

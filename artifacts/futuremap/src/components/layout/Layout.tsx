@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "wouter";
 import { Globe } from "lucide-react";
 import { useLanguage } from "@/lib/language";
+import WalletButton from "./WalletButton";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -59,9 +60,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 EN
               </button>
             </div>
-            <div className="w-8 h-8 rounded-full bg-secondary border border-border/60 flex items-center justify-center">
-              <span className="text-[10px] font-bold text-white tracking-wider">USER</span>
-            </div>
+            <WalletButton />
           </div>
         </div>
       </nav>
