@@ -61,6 +61,42 @@ const ISSUES: Array<{ countryCode: string; category: string; headline: string; b
   { countryCode: "MX", category: "economy", headline: "멕시코, 니어쇼어링 효과로 제조업 호황", body: "미국 시장 인접성이 다시 주목받고 있습니다." },
   { countryCode: "SG", category: "tech", headline: "싱가포르, 동남아 AI 인프라 허브로 도약", body: "구글·MS가 동시에 데이터센터 확장을 발표했습니다." },
   { countryCode: "IN", category: "disease", headline: "인도 일부 지역 뎅기열 확산 경계", body: "몬순 후 모기 매개 질병 우려가 커지고 있습니다." },
+
+  // natural_disaster
+  { countryCode: "JP", category: "natural_disaster", headline: "도쿄 인근 규모 6.4 지진… 지진 조기경보 작동", body: "수도권 일대 흔들림 감지, 인명 피해는 미보고." },
+  { countryCode: "JP", category: "natural_disaster", headline: "Japan tsunami advisory lifted after Pacific quake swarm", body: "Coastal residents return after 6-hour alert." },
+  { countryCode: "MX", category: "natural_disaster", headline: "멕시코 남부 활화산 분화, 인근 마을 5천 명 대피", body: "포포카테페틀 화산 활동 급증." },
+  { countryCode: "IN", category: "natural_disaster", headline: "인도 동부 사이클론 ‘레미’ 상륙, 정전·홍수 피해", body: "오디샤·서벵골 200만 명 영향." },
+  { countryCode: "BR", category: "natural_disaster", headline: "Brazil Amazon basin floods displace 80k families", body: "Record river-level rises across three states." },
+  { countryCode: "AU", category: "natural_disaster", headline: "호주 NSW 산불 확산, 비상사태 선포", body: "강풍과 고온으로 진화 난항." },
+  { countryCode: "US", category: "natural_disaster", headline: "캘리포니아 강풍성 산불, 1만 가구 대피령", body: "북부 카운티 다수에 적색 경보." },
+
+  // cyber
+  { countryCode: "US", category: "cyber", headline: "미 연방기관 노린 랜섬웨어 공격, 비상 대응 가동", body: "CISA가 다부처 공동 대응에 착수." },
+  { countryCode: "KR", category: "cyber", headline: "국내 통신사 해킹 시도 급증, KISA 공격 패턴 공개", body: "보안 업데이트 권고 발령." },
+  { countryCode: "RU", category: "cyber", headline: "Russia-linked APT group breaches European logistics firm", body: "Supply-chain disruption suspected." },
+  { countryCode: "IL", category: "cyber", headline: "이스라엘 보안기업, 신종 제로데이 취약점 발견", body: "주요 브라우저 벤더에 비공개 보고." },
+  { countryCode: "DE", category: "cyber", headline: "독일 자동차 OEM, 공급망 사이버공격으로 생산 일시 중단", body: "협력사 시스템 마비 영향." },
+  { countryCode: "GB", category: "cyber", headline: "UK NHS systems hit by data exfiltration attempt", body: "Patient records reportedly intact." },
+  { countryCode: "SG", category: "cyber", headline: "싱가포르 핀테크, 대규모 자격증명 유출 사고 발표", body: "MAS 조사 진행 중." },
+
+  // terror
+  { countryCode: "EG", category: "terror", headline: "이집트 시나이반도 차량 폭탄 테러, 사상자 발생", body: "치안군이 추가 위협 차단 작전 진행." },
+  { countryCode: "IL", category: "terror", headline: "예루살렘 도심 차량 돌진 테러 시도, 용의자 검거", body: "현장에서 무력 진압." },
+  { countryCode: "IN", category: "terror", headline: "뭄바이 다중밀집시설 대상 폭발물 모의 적발", body: "NIA 조사 확대." },
+  { countryCode: "FR", category: "terror", headline: "France raises terror alert after thwarted Paris plot", body: "Vigipirate at 'attack imminent'." },
+  { countryCode: "RU", category: "terror", headline: "러시아 모스크바 인근 시설 노린 테러 시도 좌절", body: "FSB 작전으로 용의자 검거." },
+  { countryCode: "SA", category: "terror", headline: "사우디, 메카 인근 무장조직 검거 작전 성공", body: "성지순례 안전 강화 조치." },
+
+  // climate
+  { countryCode: "BR", category: "climate", headline: "아마존 우림 손실 면적, 전년 대비 18% 증가", body: "감시 위성 데이터 기반 분석." },
+  { countryCode: "AU", category: "climate", headline: "Great Barrier Reef hits 5th mass bleaching event", body: "Scientists warn ecosystem near tipping point." },
+  { countryCode: "IN", category: "climate", headline: "인도 북부 폭염, 체감온도 49도 기록 — 사망자 보고", body: "북부 7개 주 적색 경보." },
+  { countryCode: "DE", category: "climate", headline: "EU, 2040년 탄소배출 90% 감축 목표 합의", body: "회원국 정상회의서 만장일치." },
+  { countryCode: "FR", category: "climate", headline: "프랑스, 가뭄으로 농업 수확량 30% 감소 전망", body: "곡창 지대 강수량 평년의 절반." },
+  { countryCode: "CN", category: "climate", headline: "중국 황허 유역 가뭄 장기화, 농업 비상", body: "수자원부 비상 배분 조치." },
+  { countryCode: "GB", category: "climate", headline: "London proposes congestion-zone expansion to hit net-zero", body: "Public consultation opens." },
+  { countryCode: "KR", category: "climate", headline: "한반도 평균기온, 평년 대비 +2.1도 — 기상청 분석", body: "여름철 폭염일수 역대 최다 전망." },
 ];
 
 const FORUM_POSTS = [
