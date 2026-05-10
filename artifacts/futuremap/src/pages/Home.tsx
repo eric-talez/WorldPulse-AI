@@ -27,8 +27,26 @@ const CATEGORY_STYLE: Record<string, string> = {
   disease: "bg-violet-500/20 text-violet-400 border-violet-500/30",
   tech: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
   news: "bg-sky-500/20 text-sky-400 border-sky-500/30",
+  natural_disaster: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+  cyber: "bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30",
+  terror: "bg-rose-600/20 text-rose-400 border-rose-600/40",
+  climate: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
 };
-const CATEGORY_LABEL: Record<string, string> = {
+const CATEGORY_LABEL_KO: Record<string, string> = {
+  conflict: "분쟁",
+  politics: "정치",
+  economy: "경제",
+  culture: "문화",
+  ai_jobs: "AI 일자리",
+  disease: "질병",
+  tech: "기술",
+  news: "뉴스",
+  natural_disaster: "자연재해",
+  cyber: "사이버",
+  terror: "테러",
+  climate: "기후",
+};
+const CATEGORY_LABEL_EN: Record<string, string> = {
   conflict: "Conflict",
   politics: "Politics",
   economy: "Economy",
@@ -37,9 +55,14 @@ const CATEGORY_LABEL: Record<string, string> = {
   disease: "Disease",
   tech: "Tech",
   news: "News",
+  natural_disaster: "Disaster",
+  cyber: "Cyber",
+  terror: "Terror",
+  climate: "Climate",
 };
 const catStyle = (c: string) => CATEGORY_STYLE[c] ?? "bg-secondary text-muted-foreground border-border";
-const catLabel = (c: string) => CATEGORY_LABEL[c] ?? c.toUpperCase();
+const catLabel = (c: string, lang: "ko" | "en") =>
+  (lang === "ko" ? CATEGORY_LABEL_KO[c] : CATEGORY_LABEL_EN[c]) ?? c.toUpperCase();
 
 export default function Home() {
   const { t, language } = useLanguage();
@@ -360,7 +383,7 @@ export default function Home() {
                 onClick={() => setSelectedCategory(summary.category)}
                 className={`px-2.5 py-1 text-[10px] font-mono border rounded transition-colors ${selectedCategory === summary.category ? 'bg-primary/20 text-primary border-primary/50' : 'bg-secondary text-muted-foreground border-transparent hover:border-border'}`}
               >
-                {catLabel(summary.category)}: {summary.count}
+                {catLabel(summary.category, language)}: {summary.count}
               </button>
             ))}
           </div>
@@ -377,7 +400,7 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   <span className="text-lg leading-none">{issue.countryFlag}</span>
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded ${catStyle(issue.category)}`}>
-                    {catLabel(issue.category)}
+                    {catLabel(issue.category, language)}
                   </span>
                 </div>
                 <span className="text-[10px] text-muted-foreground font-mono">

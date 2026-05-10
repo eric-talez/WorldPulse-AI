@@ -18,4 +18,8 @@ export const CategoryCountCategory = {
   culture: "culture",
   ai_jobs: "ai_jobs",
   tech: "tech",
+  natural_disaster: "natural_disaster",
+  cyber: "cyber",
+  terror: "terror",
+  climate: "climate",
 } as const;
