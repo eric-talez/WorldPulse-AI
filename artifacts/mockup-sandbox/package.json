@@ -45,6 +45,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
+    "cesium": "^1.122.0",
     "chokidar": "^4.0.3",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",

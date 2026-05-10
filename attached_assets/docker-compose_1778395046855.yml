@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: futuremap-postgres
+    environment:
+      POSTGRES_DB: futuremap
+      POSTGRES_USER: futuremap
+      POSTGRES_PASSWORD: futuremap
+    ports:
+      - "5432:5432"
+    volumes:
+      - futuremap_pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: futuremap-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  futuremap_pg_data:
