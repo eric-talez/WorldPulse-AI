@@ -3,20 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: FutureMap AI API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: countries
+  - name: issues
+  - name: jobs
+  - name: forum
+  - name: dashboard
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +27,326 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /countries:
+    get:
+      operationId: listCountries
+      tags: [countries]
+      summary: List all tracked countries with risk scores and coordinates
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Country"
+
+  /countries/{code}:
+    get:
+      operationId: getCountry
+      tags: [countries]
+      summary: Country detail with top risk and growth jobs
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountryDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /issues:
+    get:
+      operationId: listIssues
+      tags: [issues]
+      summary: Global signal stream of issues, filterable by category and country
+      parameters:
+        - in: query
+          name: category
+          required: false
+          schema:
+            type: string
+            enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech]
+        - in: query
+          name: country
+          required: false
+          schema: { type: string }
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 100, default: 30 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Issue"
+
+  /issues/summary:
+    get:
+      operationId: getIssueSummary
+      tags: [issues, dashboard]
+      summary: Counts of issues per category for the global signal stream
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryCount"
+
+  /jobs/analyze:
+    post:
+      operationId: analyzeJob
+      tags: [jobs]
+      summary: Generate an AI future report for a specified job and country
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobAnalyzeInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobReport"
+
+  /jobs/reports/recent:
+    get:
+      operationId: listRecentJobReports
+      tags: [jobs, dashboard]
+      summary: Recent job future reports generated across all users
+      parameters:
+        - in: query
+          name: limit
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 50, default: 8 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobReport"
+
+  /forum/posts:
+    get:
+      operationId: listForumPosts
+      tags: [forum]
+      summary: List forum posts, filterable by country
+      parameters:
+        - in: query
+          name: country
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ForumPost"
+    post:
+      operationId: createForumPost
+      tags: [forum]
+      summary: Create a new forum post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForumPostInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumPost"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Top-level platform stats — total countries, issues, jobs analyzed, forum posts
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
 components:
   schemas:
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error: { type: string }
+      required: [error]
+
+    Country:
+      type: object
+      required: [code, name, nameKo, flag, latitude, longitude, riskScore, region]
+      properties:
+        code: { type: string, description: "ISO 3166-1 alpha-2 code" }
+        name: { type: string }
+        nameKo: { type: string }
+        flag: { type: string, description: "Emoji flag" }
+        latitude: { type: number }
+        longitude: { type: number }
+        riskScore: { type: integer, minimum: 0, maximum: 100 }
+        region: { type: string }
+
+    JobInsight:
+      type: object
+      required: [title, score]
+      properties:
+        title: { type: string }
+        score: { type: integer, minimum: 0, maximum: 200 }
+
+    CountryDetail:
+      type: object
+      required: [country, summary, topRisks, topGrowth]
+      properties:
+        country: { $ref: "#/components/schemas/Country" }
+        summary: { type: string }
+        topRisks:
+          type: array
+          items: { $ref: "#/components/schemas/JobInsight" }
+        topGrowth:
+          type: array
+          items: { $ref: "#/components/schemas/JobInsight" }
+
+    Issue:
+      type: object
+      required: [id, countryCode, countryFlag, category, headline, publishedAt]
+      properties:
+        id: { type: string }
+        countryCode: { type: string }
+        countryFlag: { type: string }
+        category:
+          type: string
+          enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech]
+        headline: { type: string }
+        body: { type: ["string", "null"] }
+        sourceUrl: { type: ["string", "null"] }
+        publishedAt: { type: string, format: date-time }
+
+    CategoryCount:
+      type: object
+      required: [category, count]
+      properties:
+        category:
+          type: string
+          enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech]
+        count: { type: integer, minimum: 0 }
+
+    JobAnalyzeInput:
+      type: object
+      required: [jobName, countryCode]
+      properties:
+        jobName: { type: string, minLength: 1 }
+        countryCode: { type: string, minLength: 2 }
+
+    JobReport:
+      type: object
+      required:
+        - id
+        - jobName
+        - countryCode
+        - countryName
+        - automationRisk
+        - growthScore
+        - summary
+        - automatedTasks
+        - humanStrengths
+        - futureChanges
+        - recommendedSkills
+        - countryOpportunities
+        - createdAt
+      properties:
+        id: { type: string }
+        jobName: { type: string }
+        countryCode: { type: string }
+        countryName: { type: string }
+        automationRisk: { type: integer, minimum: 0, maximum: 100 }
+        growthScore: { type: integer, minimum: 0, maximum: 100 }
+        summary: { type: string }
+        automatedTasks:
+          type: array
+          items: { type: string }
+        humanStrengths:
+          type: array
+          items: { type: string }
+        futureChanges:
+          type: array
+          items: { type: string }
+        recommendedSkills:
+          type: array
+          items: { type: string }
+        countryOpportunities:
+          type: array
+          items: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    ForumPost:
+      type: object
+      required: [id, countryCode, author, title, replyCount, createdAt]
+      properties:
+        id: { type: string }
+        countryCode: { type: string }
+        author: { type: string }
+        title: { type: string }
+        body: { type: ["string", "null"] }
+        replyCount: { type: integer, minimum: 0 }
+        createdAt: { type: string, format: date-time }
+
+    ForumPostInput:
+      type: object
+      required: [countryCode, author, title]
+      properties:
+        countryCode: { type: string, minLength: 2 }
+        author: { type: string, minLength: 1 }
+        title: { type: string, minLength: 1 }
+        body: { type: string }
+
+    DashboardStats:
+      type: object
+      required: [countriesTracked, issuesToday, jobReportsGenerated, forumPosts, topCategory]
+      properties:
+        countriesTracked: { type: integer }
+        issuesToday: { type: integer }
+        jobReportsGenerated: { type: integer }
+        forumPosts: { type: integer }
+        topCategory: { type: string }

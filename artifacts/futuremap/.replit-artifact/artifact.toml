@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "FutureMap AI"
+version = "1.0.0"
+id = "artifacts/futuremap"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25691
+
+[services.development]
+run = "pnpm --filter @workspace/futuremap run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/futuremap", "run", "build" ]
+publicDir = "artifacts/futuremap/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25691"
+BASE_PATH = "/"
