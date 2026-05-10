@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { Globe, Map, Briefcase, MessageSquare, Info } from "lucide-react";
+import { Globe } from "lucide-react";
 import { useLanguage } from "@/lib/language";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -8,41 +8,43 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { language, setLanguage, t } = useLanguage();
 
   const navItems = [
-    { href: "/", label: t("지도", "Map"), icon: Map },
-    { href: "/job", label: t("직업 분석", "Job Analysis"), icon: Briefcase },
-    { href: "/forum", label: t("포럼", "Forum"), icon: MessageSquare },
-    { href: "/about", label: t("소개", "About"), icon: Info },
+    { href: "/", label: t("지도", "Map") },
+    { href: "/job", label: t("리포트", "Reports") },
+    { href: "/forum", label: t("포럼", "Forum") },
+    { href: "/about", label: t("요금제", "Pricing") },
   ];
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col dark">
-      <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/">
-            <div className="flex items-center gap-2 cursor-pointer">
-              <Globe className="w-6 h-6 text-primary" />
-              <span className="font-bold text-lg tracking-tight">FutureMap <span className="text-primary">AI</span></span>
-            </div>
-          </Link>
-          
-          <div className="flex items-center gap-6">
+      <nav className="border-b border-border/60 bg-background/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="px-6 h-[60px] flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link href="/">
+              <div className="flex items-center gap-2 cursor-pointer">
+                <Globe className="w-6 h-6 text-primary" />
+                <span className="font-bold text-lg tracking-tight text-white">
+                  FutureMap <span className="text-primary">AI</span>
+                </span>
+              </div>
+            </Link>
             <div className="hidden md:flex items-center gap-6 text-sm font-medium">
               {navItems.map((item) => (
                 <Link key={item.href} href={item.href}>
-                  <div className={`cursor-pointer flex items-center gap-2 transition-colors ${
+                  <div className={`cursor-pointer transition-colors ${
                     location === item.href ? "text-primary" : "text-muted-foreground hover:text-foreground"
                   }`}>
-                    <item.icon className="w-4 h-4" />
                     {item.label}
                   </div>
                 </Link>
               ))}
             </div>
-            
-            <div className="flex items-center bg-secondary rounded-full p-1 border border-border">
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center bg-secondary/70 rounded-full p-1 border border-border/60">
               <button
                 className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${
-                  language === "ko" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  language === "ko" ? "bg-secondary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={() => setLanguage("ko")}
               >
@@ -50,17 +52,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </button>
               <button
                 className={`px-3 py-1 text-xs font-bold rounded-full transition-all ${
-                  language === "en" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  language === "en" ? "bg-secondary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={() => setLanguage("en")}
               >
                 EN
               </button>
             </div>
+            <div className="w-8 h-8 rounded-full bg-secondary border border-border/60 flex items-center justify-center">
+              <span className="text-[10px] font-bold text-white tracking-wider">USER</span>
+            </div>
           </div>
         </div>
       </nav>
-      
+
       <main className="flex-1 flex flex-col relative">
         {children}
       </main>

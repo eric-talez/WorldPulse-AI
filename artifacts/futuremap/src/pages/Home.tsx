@@ -18,6 +18,29 @@ declare global {
   }
 }
 
+const CATEGORY_STYLE: Record<string, string> = {
+  conflict: "bg-red-500/20 text-red-400 border-red-500/30",
+  politics: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+  economy: "bg-green-500/20 text-green-400 border-green-500/30",
+  culture: "bg-white/10 text-white border-white/20",
+  ai_jobs: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+  disease: "bg-violet-500/20 text-violet-400 border-violet-500/30",
+  tech: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+  news: "bg-sky-500/20 text-sky-400 border-sky-500/30",
+};
+const CATEGORY_LABEL: Record<string, string> = {
+  conflict: "Conflict",
+  politics: "Politics",
+  economy: "Economy",
+  culture: "Culture",
+  ai_jobs: "AI Jobs",
+  disease: "Disease",
+  tech: "Tech",
+  news: "News",
+};
+const catStyle = (c: string) => CATEGORY_STYLE[c] ?? "bg-secondary text-muted-foreground border-border";
+const catLabel = (c: string) => CATEGORY_LABEL[c] ?? c.toUpperCase();
+
 export default function Home() {
   const { t, language } = useLanguage();
   const cesiumContainer = useRef<HTMLDivElement>(null);
@@ -206,25 +229,34 @@ export default function Home() {
   return (
     <div className="flex-1 flex flex-col md:flex-row bg-[#0a0f1c] relative overflow-hidden">
       
-      {/* HUD Stats Ribbon */}
-      <div className="absolute top-4 left-4 z-10 flex gap-4 pointer-events-none">
-        {stats && (
-          <>
-            <div className="bg-background/60 backdrop-blur-md border border-border/50 px-4 py-2 rounded-lg pointer-events-auto">
-              <div className="text-[10px] text-muted-foreground tracking-wider uppercase font-mono mb-1">{t("추적 중인 국가", "Tracked Countries")}</div>
-              <div className="text-xl font-bold font-mono text-primary">{stats.countriesTracked}</div>
-            </div>
-            <div className="bg-background/60 backdrop-blur-md border border-border/50 px-4 py-2 rounded-lg pointer-events-auto">
-              <div className="text-[10px] text-muted-foreground tracking-wider uppercase font-mono mb-1">{t("오늘의 이슈", "Issues Today")}</div>
-              <div className="text-xl font-bold font-mono text-accent">{stats.issuesToday}</div>
-            </div>
-            <div className="bg-background/60 backdrop-blur-md border border-border/50 px-4 py-2 rounded-lg pointer-events-auto hidden sm:block">
-              <div className="text-[10px] text-muted-foreground tracking-wider uppercase font-mono mb-1">{t("생성된 리포트", "Generated Reports")}</div>
-              <div className="text-xl font-bold font-mono text-foreground">{stats.jobReportsGenerated}</div>
-            </div>
-          </>
-        )}
+      {/* System HUD overlay */}
+      <div className="absolute top-4 left-4 z-10 pointer-events-none">
+        <div className="bg-black/40 backdrop-blur border border-border/50 p-3 rounded-lg pointer-events-auto">
+          <div className="text-[10px] font-mono text-primary mb-1 tracking-widest">SYSTEM STATUS: NOMINAL</div>
+          <div className="text-xs font-medium text-white flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            {t("실시간 데이터 스트림", "Live Data Stream Active")}
+          </div>
+        </div>
       </div>
+
+      {/* Stats ribbon (bottom-left) */}
+      {stats && (
+        <div className="absolute bottom-4 left-4 z-10 flex gap-2 pointer-events-none">
+          <div className="bg-background/60 backdrop-blur-md border border-border/50 px-3 py-1.5 rounded-md pointer-events-auto">
+            <div className="text-[9px] text-muted-foreground tracking-wider uppercase font-mono">{t("국가", "Countries")}</div>
+            <div className="text-base font-bold font-mono text-primary leading-tight">{stats.countriesTracked}</div>
+          </div>
+          <div className="bg-background/60 backdrop-blur-md border border-border/50 px-3 py-1.5 rounded-md pointer-events-auto">
+            <div className="text-[9px] text-muted-foreground tracking-wider uppercase font-mono">{t("오늘 이슈", "Today")}</div>
+            <div className="text-base font-bold font-mono text-accent leading-tight">{stats.issuesToday}</div>
+          </div>
+          <div className="bg-background/60 backdrop-blur-md border border-border/50 px-3 py-1.5 rounded-md pointer-events-auto hidden sm:block">
+            <div className="text-[9px] text-muted-foreground tracking-wider uppercase font-mono">{t("리포트", "Reports")}</div>
+            <div className="text-base font-bold font-mono text-foreground leading-tight">{stats.jobReportsGenerated}</div>
+          </div>
+        </div>
+      )}
 
       {/* Main Globe Area */}
       <div className="flex-1 relative min-h-[50vh] md:min-h-full">
@@ -326,9 +358,9 @@ export default function Home() {
               <button 
                 key={summary.category}
                 onClick={() => setSelectedCategory(summary.category)}
-                className={`px-2.5 py-1 text-[10px] font-mono uppercase border rounded transition-colors ${selectedCategory === summary.category ? 'bg-primary/20 text-primary border-primary/50' : 'bg-secondary text-muted-foreground border-transparent hover:border-border'}`}
+                className={`px-2.5 py-1 text-[10px] font-mono border rounded transition-colors ${selectedCategory === summary.category ? 'bg-primary/20 text-primary border-primary/50' : 'bg-secondary text-muted-foreground border-transparent hover:border-border'}`}
               >
-                {summary.category} <span className="opacity-50 ml-1">{summary.count}</span>
+                {catLabel(summary.category)}: {summary.count}
               </button>
             ))}
           </div>
@@ -344,8 +376,8 @@ export default function Home() {
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-lg leading-none">{issue.countryFlag}</span>
-                  <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 border border-primary/20 bg-primary/10 text-primary rounded">
-                    {issue.category}
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded ${catStyle(issue.category)}`}>
+                    {catLabel(issue.category)}
                   </span>
                 </div>
                 <span className="text-[10px] text-muted-foreground font-mono">
