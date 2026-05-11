@@ -28,6 +28,10 @@ localPort = 8081
 externalPort = 80
 
 [[ports]]
+localPort = 8082
+externalPort = 3000
+
+[[ports]]
 localPort = 25691
 externalPort = 3001
 
@@ -37,6 +41,6 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-PAYPAL_CLIENT_ID = "AdeGi-cc80nutzF0l0Setlp5oYh647sAzn9lxbbupeTDpxtv"
-PAYPAL_CLIENT_SECRET = "EJ0RFfuBBB1JTMddooysXRc_tPpLNf3kiHh0jp50fnaYOqm"
+PAYPAL_CLIENT_ID = "AdeGi-cc80nutzF0l0Setlp5oYh647sAzn9IxbbupeTDpxtve-uoRuqF0Ht_C-tfCqY0hhr236a3zoF7"
+PAYPAL_CLIENT_SECRET = "EJ0RFfuBBB1JTMddooysXRc_tPpLNf3kiHh0jp50fnaYOqmDQ_bhrtnkoGUp74sEgriMiUJ0jYFlqxHC"
 PAYPAL_ENV = "sandbox"
