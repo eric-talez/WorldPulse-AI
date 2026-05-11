@@ -1,0 +1,105 @@
+I want to add payments to this project using **Stripe as the main payment provider** and **PayPal as a secondary payment option**.
+
+Please inspect the current project structure first, then implement the payment system in a clean and maintainable way.
+
+Main goal:
+
+* Stripe should be the primary checkout flow.
+* Stripe should support card payments and mobile-friendly express checkout options like Apple Pay / Google Pay when available.
+* PayPal should be added as an additional payment method for users who prefer PayPal, Venmo, or Pay Later.
+* Do not hard-code any API keys or secrets.
+* Use Replit Secrets / environment variables for all credentials.
+
+Please structure the payment system so it is **provider-agnostic**, not Stripe-only. I want the database/payment logic to support both Stripe and PayPal.
+
+Recommended database/payment structure:
+
+* payments table:
+
+  * id
+  * user_id
+  * provider: `stripe` or `paypal`
+  * provider_payment_id
+  * provider_customer_id
+  * amount
+  * currency
+  * status
+  * plan
+  * created_at
+  * updated_at
+
+If subscriptions are already part of this project, also add or update:
+
+* subscriptions table:
+
+  * id
+  * user_id
+  * provider: `stripe` or `paypal`
+  * provider_subscription_id
+  * plan
+  * status
+  * current_period_start
+  * current_period_end
+  * created_at
+  * updated_at
+
+Environment variables needed:
+
+For Stripe:
+
+* STRIPE_SECRET_KEY
+* STRIPE_WEBHOOK_SECRET
+* STRIPE_PRICE_ID_PRO if subscription pricing is used
+* STRIPE_PRICE_ID_ENTERPRISE if enterprise pricing is used
+
+For PayPal:
+
+* PAYPAL_CLIENT_ID
+* PAYPAL_CLIENT_SECRET
+* PAYPAL_ENV=sandbox or live
+* PAYPAL_WEBHOOK_ID if PayPal webhook is implemented
+* PAYPAL_PLAN_ID_PRO if PayPal subscriptions are used
+* PAYPAL_PLAN_ID_ENTERPRISE if PayPal subscriptions are used
+
+Please implement Stripe first:
+
+1. Create a Stripe Checkout session endpoint.
+2. Redirect the user to Stripe Checkout.
+3. Handle successful payment or subscription creation.
+4. Add Stripe webhook handling.
+5. On successful payment/subscription event, update the user’s plan/status in the database.
+6. Make sure Apple Pay / Google Pay can appear through Stripe Checkout or Stripe’s express checkout options when available.
+
+Then implement PayPal as a secondary option:
+
+1. Create PayPal order/subscription creation endpoint.
+2. Capture or confirm the PayPal payment on the server side.
+3. Save PayPal transaction details in the same payments/subscriptions structure.
+4. Add PayPal webhook support if needed, especially for refunds, disputes, cancellations, or recurring subscription updates.
+
+Important security requirements:
+
+* Never expose secret keys to the frontend.
+* All payment verification must happen on the backend.
+* Do not trust frontend-only success responses.
+* Webhooks should verify signatures when possible.
+* Make sure the user plan is updated only after backend verification from Stripe or PayPal.
+
+Frontend requirement:
+
+On the pricing or checkout page, show payment options like this:
+
+1. Primary button: “Pay with Card / Apple Pay / Google Pay” using Stripe.
+2. Secondary button: “Pay with PayPal” using PayPal.
+
+Please keep the UI simple and clean. Do not remove existing functionality unless necessary.
+
+Before making major structural changes, briefly explain what files you will modify. After implementation, provide:
+
+1. A list of files changed.
+2. The environment variables I need to add in Replit Secrets.
+3. How to test Stripe in test mode.
+4. How to test PayPal in sandbox mode.
+5. Any webhook URLs I need to register in Stripe or PayPal dashboards.
+
+Please start with a minimal working version first: Stripe Checkout + backend webhook + database update. After that, add PayPal as a secondary option. Do not rewrite the entire app.
