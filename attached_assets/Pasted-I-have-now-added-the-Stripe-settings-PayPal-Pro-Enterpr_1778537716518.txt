@@ -1,0 +1,91 @@
+I have now added the Stripe settings, PayPal Pro/Enterprise Plan IDs, and PayPal Webhook ID in Replit Secrets/Configurations.
+
+Please do a full verification and final cleanup of the payment integration.
+
+Important: Do not rely on your previous summary. Please inspect the current actual environment variables, Secrets/Configurations, and source code.
+
+Tasks:
+
+1. Verify all payment-related environment variable names currently used by the code.
+
+   * Check all `process.env[...]` and `process.env.X` references related to Stripe and PayPal.
+   * Confirm whether the current Replit Secrets/Configurations names exactly match what the code expects.
+   * If there is a mismatch, update the code to use the correct existing Replit variable names, or clearly tell me which variable needs to be renamed.
+
+2. Verify Stripe configuration.
+
+   * Confirm Stripe Checkout is available.
+   * Confirm the code correctly uses:
+
+     * `STRIPE_PRICE_ID_PRO`
+     * `STRIPE_PRICE_ID_ENTERPRISE`
+     * `STRIPE_WEBHOOK_SECRET`
+   * Confirm whether `STRIPE_SECRET_KEY` or `STRIPE_PUBLISHABLE_KEY` is required, or whether the Replit Stripe connector handles Stripe credentials automatically.
+   * If any unused or incorrectly named variable exists, such as `STRIPE_WEBHOOK_PUBLISHABLE`, confirm whether it is unused and safe to delete.
+
+3. Verify PayPal configuration.
+
+   * Confirm the code correctly uses:
+
+     * `PAYPAL_CLIENT_ID`
+     * `PAYPAL_CLIENT_SECRET`
+     * `PAYPAL_ENV`
+     * `PAYPAL_PLAN_ID_PRO`
+     * `PAYPAL_PLAN_ID_ENTERPRISE`
+     * `PAYPAL_WEBHOOK_ID`
+   * Confirm PayPal one-time payments still work.
+   * Confirm PayPal subscription checkout uses the correct Pro and Enterprise plan IDs.
+   * Confirm PayPal webhook verification uses `PAYPAL_WEBHOOK_ID`.
+
+4. Verify webhook endpoints.
+
+   * Stripe webhook endpoint should be:
+     `/api/payments/stripe/webhook`
+   * PayPal webhook endpoint should be:
+     `/api/payments/webhook`
+   * Confirm both routes are reachable from the deployed Replit URL.
+   * Confirm the Stripe webhook route is still mounted before `express.json()` with raw body parsing.
+   * Confirm the PayPal webhook route can receive PayPal webhook events and verify signatures.
+
+5. Test payment config endpoint.
+
+   * Test `/api/payments/config` locally and, if possible, on the deployed URL.
+   * Confirm it returns the correct availability status for both Stripe and PayPal.
+   * If the deployed Replit URL returns a Replit Shield temporary redirect, explain whether that affects PayPal/Stripe webhooks and what URL should be used instead.
+
+6. Test Stripe payment/subscription flow.
+
+   * Test Pro checkout.
+   * Test Enterprise checkout.
+   * Confirm success redirect works.
+   * Confirm `/payments/stripe/sessions/:id/confirm` verifies the session server-side.
+   * Confirm the database updates the user’s plan/status only after server-side verification.
+   * Confirm records are created/updated in the provider-agnostic `subscriptions` and `payment_sessions` tables.
+
+7. Test PayPal payment/subscription flow.
+
+   * Test Pro subscription checkout with the sandbox plan ID.
+   * Test Enterprise subscription checkout with the sandbox plan ID.
+   * Confirm successful PayPal subscription activation updates the database.
+   * Confirm PayPal webhook events update subscription/payment status correctly when received.
+
+8. Database verification.
+
+   * Confirm the provider-agnostic database structure is correct.
+   * Confirm records store `provider = stripe` or `provider = paypal`.
+   * Confirm duplicate records are avoided.
+   * Confirm user tier/status is updated consistently for both providers.
+
+9. Final deliverables.
+   After verification, please provide:
+
+   * A list of all payment-related files checked or modified.
+   * The exact environment variable names required in Replit Secrets/Configurations.
+   * Which variables should be Secrets versus Configurations.
+   * The final Stripe webhook URL I should use.
+   * The final PayPal webhook URL I should use.
+   * A step-by-step test checklist for Stripe test mode.
+   * A step-by-step test checklist for PayPal sandbox mode.
+   * Any remaining issues or missing values.
+
+Please make only necessary changes. Do not rewrite the whole app. The goal is to finalize and verify the current Stripe + PayPal payment/subscription implementation.
