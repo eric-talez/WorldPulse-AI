@@ -33,3 +33,10 @@ externalPort = 3001
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+PAYPAL_CLIENT_ID = "AdeGi-cc80nutzF0l0Setlp5oYh647sAzn9lxbbupeTDpxtv"
+PAYPAL_CLIENT_SECRET = "EJ0RFfuBBB1JTMddooysXRc_tPpLNf3kiHh0jp50fnaYOqm"
+PAYPAL_ENV = "sandbox"
