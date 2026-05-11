@@ -45,7 +45,9 @@ export async function getActiveSubscription(walletAddress: string): Promise<Subs
     .select()
     .from(subscriptionsTable)
     .where(eq(subscriptionsTable.walletAddress, walletAddress.toLowerCase()));
-  const active = rows.find((r) => r.status === "ACTIVE" || r.status === "APPROVAL_PENDING" || r.status === "APPROVED");
+  const active = rows.find(
+    (r) => r.status === "ACTIVE" || r.status === "APPROVAL_PENDING" || r.status === "APPROVED" || r.status === "active" || r.status === "trialing",
+  );
   return active ?? null;
 }
 
@@ -57,7 +59,8 @@ export function buildCurrentUser(user: User, subscription: Subscription | null) 
     lastLoginAt: user.lastLoginAt,
     activeSubscription: subscription
       ? {
-          paypalSubscriptionId: subscription.paypalSubscriptionId,
+          provider: subscription.provider as "paypal" | "stripe",
+          providerSubscriptionId: subscription.providerSubscriptionId,
           plan: subscription.plan as UserTier,
           status: subscription.status,
           nextBillingAt: subscription.nextBillingAt,

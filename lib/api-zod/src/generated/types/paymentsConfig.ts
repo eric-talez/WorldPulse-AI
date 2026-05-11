@@ -6,10 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { PaymentsConfigEnv } from "./paymentsConfigEnv";
+import type { PaymentsConfigPaypal } from "./paymentsConfigPaypal";
 import type { PaymentsConfigPlans } from "./paymentsConfigPlans";
+import type { PaymentsConfigStripe } from "./paymentsConfigStripe";
 
 export interface PaymentsConfig {
   clientId: string | null;
   env: PaymentsConfigEnv;
   plans: PaymentsConfigPlans;
+  paypal: PaymentsConfigPaypal;
+  stripe: PaymentsConfigStripe;
 }

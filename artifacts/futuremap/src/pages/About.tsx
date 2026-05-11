@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/lib/language";
 import { useAuth, type Tier } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,7 +9,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { useGetPaymentsConfig, getGetPaymentsConfigQueryKey } from "@workspace/api-client-react";
+import {
+  useGetPaymentsConfig,
+  getGetPaymentsConfigQueryKey,
+} from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
@@ -50,6 +53,46 @@ export default function About() {
   const [checkout, setCheckout] = useState<CheckoutContext | null>(null);
   const [pickPlan, setPickPlan] = useState<PlanId | null>(null);
 
+  // Confirm Stripe redirect on return.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("stripe_session_id");
+    const status = params.get("stripe_status");
+    if (!sessionId) return;
+    // Strip query params from the URL.
+    const cleanUrl = window.location.pathname + window.location.hash;
+    window.history.replaceState({}, "", cleanUrl);
+    if (status === "cancelled") {
+      toast({
+        title: t("결제 취소됨", "Payment cancelled"),
+        description: t("언제든 다시 시도할 수 있습니다.", "You can try again anytime."),
+      });
+      return;
+    }
+    void (async () => {
+      try {
+        const updated = await api<{ tier: Tier }>(
+          `/api/payments/stripe/sessions/${encodeURIComponent(sessionId)}/confirm`,
+          { method: "POST" },
+        );
+        await refresh();
+        toast({
+          title: t("결제 완료", "Payment complete"),
+          description: t(
+            `등급이 ${updated.tier.toUpperCase()}로 업그레이드되었습니다.`,
+            `Your tier has been upgraded to ${updated.tier.toUpperCase()}.`,
+          ),
+        });
+      } catch (err) {
+        toast({
+          title: t("결제 확인 실패", "Payment confirmation failed"),
+          description: (err as Error).message,
+          variant: "destructive",
+        });
+      }
+    })();
+  }, [refresh, t, toast]);
+
   const handleChoose = async (plan: "free" | PlanId) => {
     if (plan === "free") {
       toast({
@@ -69,17 +112,6 @@ export default function About() {
         });
         return;
       }
-    }
-    if (!payCfg?.clientId) {
-      toast({
-        title: t("결제 미설정", "Payments not configured"),
-        description: t(
-          "관리자가 PayPal 키를 아직 등록하지 않았습니다.",
-          "PayPal credentials have not been configured yet.",
-        ),
-        variant: "destructive",
-      });
-      return;
     }
     setPickPlan(plan);
   };
@@ -102,13 +134,31 @@ export default function About() {
     });
   };
 
+  const stripeAvailable = payCfg?.stripe?.available ?? false;
+  const paypalAvailable = Boolean(payCfg?.paypal?.clientId);
   const planSubscriptionAvailable = useMemo(() => {
-    if (!payCfg) return { pro: false, enterprise: false };
+    if (!payCfg) {
+      return {
+        pro: { paypal: false, stripe: false },
+        enterprise: { paypal: false, stripe: false },
+      };
+    }
     return {
-      pro: payCfg.plans.pro.hasSubscriptionPlan,
-      enterprise: payCfg.plans.enterprise.hasSubscriptionPlan,
+      pro: {
+        paypal: payCfg.paypal.plans.pro.hasSubscriptionPlan,
+        stripe: payCfg.stripe.plans.pro.hasSubscriptionPlan,
+      },
+      enterprise: {
+        paypal: payCfg.paypal.plans.enterprise.hasSubscriptionPlan,
+        stripe: payCfg.stripe.plans.enterprise.hasSubscriptionPlan,
+      },
     };
   }, [payCfg]);
+
+  const subAvailableForPlan = (plan: PlanId): boolean => {
+    const a = planSubscriptionAvailable[plan];
+    return a.stripe || a.paypal;
+  };
 
   return (
     <div className="container mx-auto px-4 py-16 max-w-4xl">
@@ -224,12 +274,12 @@ export default function About() {
           <div className="grid grid-cols-2 gap-3 pt-2">
             <button
               onClick={() => startCheckout("subscription")}
-              disabled={!!pickPlan && !planSubscriptionAvailable[pickPlan]}
+              disabled={!!pickPlan && !subAvailableForPlan(pickPlan)}
               className="rounded-xl border border-primary/40 bg-primary/10 hover:bg-primary/20 p-4 text-left transition-colors disabled:opacity-50"
             >
               <div className="font-bold mb-1">{t("월 구독", "Monthly Subscription")}</div>
               <div className="text-xs text-muted-foreground">
-                {!!pickPlan && planSubscriptionAvailable[pickPlan]
+                {!!pickPlan && subAvailableForPlan(pickPlan)
                   ? t("매달 자동 결제 · 언제든 취소", "Auto-billed monthly · cancel anytime")
                   : t("관리자가 구독 플랜을 등록해야 합니다", "Subscription plan not configured")}
               </div>
@@ -250,31 +300,106 @@ export default function About() {
       <Dialog open={checkout !== null} onOpenChange={(o) => !o && setCheckout(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {t("PayPal로 결제", "Pay with PayPal")}
-            </DialogTitle>
+            <DialogTitle>{t("결제 방법", "Payment Method")}</DialogTitle>
             <DialogDescription>
               {checkout && (
                 checkout.mode === "subscription"
-                  ? t("월 구독을 시작하려면 PayPal 버튼을 눌러 주세요.", "Click the PayPal button to start your monthly subscription.")
-                  : t("1회 결제를 진행하려면 PayPal 버튼을 눌러 주세요.", "Click the PayPal button to make a one-time payment.")
+                  ? t("월 구독을 시작합니다.", "Start your monthly subscription.")
+                  : t("1회 결제를 진행합니다.", "Make a one-time payment.")
               )}
             </DialogDescription>
           </DialogHeader>
-          {checkout && payCfg?.clientId && (
-            <PaypalCheckout
-              clientId={payCfg.clientId}
-              env={payCfg.env}
-              plan={checkout.plan}
-              mode={checkout.mode}
-              onSuccess={onCheckoutSuccess}
-              onError={(msg) =>
-                toast({ title: t("결제 실패", "Payment failed"), description: msg, variant: "destructive" })
-              }
-              onCancel={() =>
-                toast({ title: t("결제 취소됨", "Payment cancelled"), description: t("언제든 다시 시도할 수 있습니다.", "You can try again anytime.") })
-              }
-            />
+          {checkout && (
+            <div className="space-y-4 pt-2">
+              {/* Primary: Stripe */}
+              <div className="space-y-2">
+                <button
+                  onClick={async () => {
+                    try {
+                      const successUrl = `${window.location.origin}${window.location.pathname}?stripe_session_id={CHECKOUT_SESSION_ID}&stripe_status=success`;
+                      const cancelUrl = `${window.location.origin}${window.location.pathname}?stripe_status=cancelled`;
+                      const res = await api<{ url: string }>("/api/payments/stripe/checkout", {
+                        method: "POST",
+                        body: JSON.stringify({
+                          plan: checkout.plan,
+                          mode: checkout.mode,
+                          successUrl,
+                          cancelUrl,
+                        }),
+                      });
+                      window.location.href = res.url;
+                    } catch (err) {
+                      toast({
+                        title: t("결제 실패", "Payment failed"),
+                        description: (err as Error).message,
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  disabled={
+                    !stripeAvailable ||
+                    (checkout.mode === "subscription" && !planSubscriptionAvailable[checkout.plan].stripe)
+                  }
+                  className="w-full py-3 rounded-lg font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {t("카드 / Apple Pay / Google Pay", "Pay with Card / Apple Pay / Google Pay")}
+                </button>
+                {!stripeAvailable && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("Stripe가 아직 연결되지 않았습니다.", "Stripe is not connected yet.")}
+                  </p>
+                )}
+                {stripeAvailable &&
+                  checkout.mode === "subscription" &&
+                  !planSubscriptionAvailable[checkout.plan].stripe && (
+                    <p className="text-xs text-muted-foreground">
+                      {t(
+                        "Stripe 구독 가격이 등록되어 있지 않습니다 (STRIPE_PRICE_ID).",
+                        "Stripe subscription price ID is not configured.",
+                      )}
+                    </p>
+                  )}
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">{t("또는", "or")}</span>
+                </div>
+              </div>
+
+              {/* Secondary: PayPal */}
+              {paypalAvailable && payCfg?.paypal?.clientId ? (
+                (checkout.mode === "subscription" && !planSubscriptionAvailable[checkout.plan].paypal) ? (
+                  <p className="text-xs text-muted-foreground text-center">
+                    {t(
+                      "PayPal 구독 플랜이 등록되어 있지 않습니다 (PAYPAL_PLAN_ID).",
+                      "PayPal subscription plan ID is not configured.",
+                    )}
+                  </p>
+                ) : (
+                  <PaypalCheckout
+                    clientId={payCfg.paypal.clientId}
+                    env={payCfg.paypal.env}
+                    plan={checkout.plan}
+                    mode={checkout.mode}
+                    onSuccess={onCheckoutSuccess}
+                    onError={(msg) =>
+                      toast({ title: t("결제 실패", "Payment failed"), description: msg, variant: "destructive" })
+                    }
+                    onCancel={() =>
+                      toast({ title: t("결제 취소됨", "Payment cancelled"), description: t("언제든 다시 시도할 수 있습니다.", "You can try again anytime.") })
+                    }
+                  />
+                )
+              ) : (
+                <p className="text-xs text-muted-foreground text-center">
+                  {t("PayPal이 아직 연결되지 않았습니다.", "PayPal is not connected yet.")}
+                </p>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -306,7 +431,7 @@ function PaypalCheckout({ clientId, plan, mode, onSuccess, onError, onCancel }: 
   );
 
   return (
-    <div className="pt-2">
+    <div>
       <PayPalScriptProvider options={options}>
         {isSubscription ? (
           <PayPalButtons
@@ -358,12 +483,6 @@ function PaypalCheckout({ clientId, plan, mode, onSuccess, onError, onCancel }: 
           />
         )}
       </PayPalScriptProvider>
-      <p className="text-xs text-muted-foreground mt-3">
-        {t(
-          "결제가 완료되면 잠시 후 등급이 자동으로 업그레이드됩니다.",
-          "Once your payment completes, your tier will be upgraded shortly.",
-        )}
-      </p>
     </div>
   );
 }

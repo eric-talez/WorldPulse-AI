@@ -316,7 +316,8 @@ export const VerifyAuthSignatureResponse = zod.object({
   activeSubscription: zod
     .union([
       zod.object({
-        paypalSubscriptionId: zod.string(),
+        provider: zod.enum(["paypal", "stripe"]),
+        providerSubscriptionId: zod.string(),
         plan: zod.enum(["free", "pro", "enterprise"]),
         status: zod.string(),
         nextBillingAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
@@ -339,7 +340,8 @@ export const GetCurrentUserResponse = zod.object({
       activeSubscription: zod
         .union([
           zod.object({
-            paypalSubscriptionId: zod.string(),
+            provider: zod.enum(["paypal", "stripe"]),
+            providerSubscriptionId: zod.string(),
             plan: zod.enum(["free", "pro", "enterprise"]),
             status: zod.string(),
             nextBillingAt: zod
@@ -380,7 +382,8 @@ export const CapturePaypalOrderResponse = zod.object({
   activeSubscription: zod
     .union([
       zod.object({
-        paypalSubscriptionId: zod.string(),
+        provider: zod.enum(["paypal", "stripe"]),
+        providerSubscriptionId: zod.string(),
         plan: zod.enum(["free", "pro", "enterprise"]),
         status: zod.string(),
         nextBillingAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
@@ -417,7 +420,8 @@ export const ActivatePaypalSubscriptionResponse = zod.object({
   activeSubscription: zod
     .union([
       zod.object({
-        paypalSubscriptionId: zod.string(),
+        provider: zod.enum(["paypal", "stripe"]),
+        providerSubscriptionId: zod.string(),
         plan: zod.enum(["free", "pro", "enterprise"]),
         status: zod.string(),
         nextBillingAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
@@ -442,7 +446,8 @@ export const CancelPaypalSubscriptionResponse = zod.object({
   activeSubscription: zod
     .union([
       zod.object({
-        paypalSubscriptionId: zod.string(),
+        provider: zod.enum(["paypal", "stripe"]),
+        providerSubscriptionId: zod.string(),
         plan: zod.enum(["free", "pro", "enterprise"]),
         status: zod.string(),
         nextBillingAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
@@ -468,6 +473,33 @@ export const GetPaymentsConfigResponse = zod.object({
       hasSubscriptionPlan: zod.boolean(),
     }),
   }),
+  paypal: zod.object({
+    clientId: zod.union([zod.string(), zod.null()]),
+    env: zod.enum(["sandbox", "live"]),
+    plans: zod.object({
+      pro: zod.object({
+        priceUsd: zod.number(),
+        hasSubscriptionPlan: zod.boolean(),
+      }),
+      enterprise: zod.object({
+        priceUsd: zod.number(),
+        hasSubscriptionPlan: zod.boolean(),
+      }),
+    }),
+  }),
+  stripe: zod.object({
+    available: zod.boolean(),
+    plans: zod.object({
+      pro: zod.object({
+        priceUsd: zod.number(),
+        hasSubscriptionPlan: zod.boolean(),
+      }),
+      enterprise: zod.object({
+        priceUsd: zod.number(),
+        hasSubscriptionPlan: zod.boolean(),
+      }),
+    }),
+  }),
 });
 
 /**
@@ -481,6 +513,47 @@ export const PaypalWebhookBody = zod.object({
 
 export const PaypalWebhookResponse = zod.object({
   ok: zod.boolean(),
+});
+
+/**
+ * @summary Create a Stripe Checkout session (card / Apple Pay / Google Pay)
+ */
+export const CreateStripeCheckoutBody = zod.object({
+  plan: zod.enum(["pro", "enterprise"]),
+  mode: zod.enum(["subscription", "one_time"]),
+  successUrl: zod.string(),
+  cancelUrl: zod.string(),
+});
+
+export const CreateStripeCheckoutResponse = zod.object({
+  id: zod.string(),
+  url: zod.string(),
+});
+
+/**
+ * @summary Server-verify a Stripe Checkout session result and update the user
+ */
+export const ConfirmStripeCheckoutParams = zod.object({
+  sessionId: zod.coerce.string(),
+});
+
+export const ConfirmStripeCheckoutResponse = zod.object({
+  walletAddress: zod.string(),
+  tier: zod.enum(["free", "pro", "enterprise"]),
+  createdAt: zod.coerce.date(),
+  lastLoginAt: zod.coerce.date(),
+  activeSubscription: zod
+    .union([
+      zod.object({
+        provider: zod.enum(["paypal", "stripe"]),
+        providerSubscriptionId: zod.string(),
+        plan: zod.enum(["free", "pro", "enterprise"]),
+        status: zod.string(),
+        nextBillingAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+      }),
+      zod.null(),
+    ])
+    .optional(),
 });
 
 /**

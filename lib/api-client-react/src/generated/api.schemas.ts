@@ -180,8 +180,17 @@ export const UserTier = {
   enterprise: "enterprise",
 } as const;
 
+export type ActiveSubscriptionProvider =
+  (typeof ActiveSubscriptionProvider)[keyof typeof ActiveSubscriptionProvider];
+
+export const ActiveSubscriptionProvider = {
+  paypal: "paypal",
+  stripe: "stripe",
+} as const;
+
 export interface ActiveSubscription {
-  paypalSubscriptionId: string;
+  provider: ActiveSubscriptionProvider;
+  providerSubscriptionId: string;
   plan: UserTier;
   status: string;
   nextBillingAt?: string | null;
@@ -241,10 +250,61 @@ export type PaymentsConfigPlans = {
   enterprise: PlanInfo;
 };
 
+export type PaymentsConfigPaypalEnv =
+  (typeof PaymentsConfigPaypalEnv)[keyof typeof PaymentsConfigPaypalEnv];
+
+export const PaymentsConfigPaypalEnv = {
+  sandbox: "sandbox",
+  live: "live",
+} as const;
+
+export type PaymentsConfigPaypalPlans = {
+  pro: PlanInfo;
+  enterprise: PlanInfo;
+};
+
+export type PaymentsConfigPaypal = {
+  clientId: string | null;
+  env: PaymentsConfigPaypalEnv;
+  plans: PaymentsConfigPaypalPlans;
+};
+
+export type PaymentsConfigStripePlans = {
+  pro: PlanInfo;
+  enterprise: PlanInfo;
+};
+
+export type PaymentsConfigStripe = {
+  available: boolean;
+  plans: PaymentsConfigStripePlans;
+};
+
 export interface PaymentsConfig {
   clientId: string | null;
   env: PaymentsConfigEnv;
   plans: PaymentsConfigPlans;
+  paypal: PaymentsConfigPaypal;
+  stripe: PaymentsConfigStripe;
+}
+
+export type StripeCheckoutInputMode =
+  (typeof StripeCheckoutInputMode)[keyof typeof StripeCheckoutInputMode];
+
+export const StripeCheckoutInputMode = {
+  subscription: "subscription",
+  one_time: "one_time",
+} as const;
+
+export interface StripeCheckoutInput {
+  plan: PlanId;
+  mode: StripeCheckoutInputMode;
+  successUrl: string;
+  cancelUrl: string;
+}
+
+export interface StripeCheckoutSession {
+  id: string;
+  url: string;
 }
 
 export type PaypalWebhookEventResource = { [key: string]: unknown };

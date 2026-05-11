@@ -7,6 +7,7 @@
  */
 
 export * from "./activeSubscription";
+export * from "./activeSubscriptionProvider";
 export * from "./authNonce";
 export * from "./authNonceInput";
 export * from "./authVerifyInput";
@@ -36,10 +37,18 @@ export * from "./listIssuesParams";
 export * from "./listRecentJobReportsParams";
 export * from "./paymentsConfig";
 export * from "./paymentsConfigEnv";
+export * from "./paymentsConfigPaypal";
+export * from "./paymentsConfigPaypalEnv";
+export * from "./paymentsConfigPaypalPlans";
 export * from "./paymentsConfigPlans";
+export * from "./paymentsConfigStripe";
+export * from "./paymentsConfigStripePlans";
 export * from "./paypalWebhookEvent";
 export * from "./paypalWebhookEventResource";
 export * from "./planId";
 export * from "./planInfo";
+export * from "./stripeCheckoutInput";
+export * from "./stripeCheckoutInputMode";
+export * from "./stripeCheckoutSession";
 export * from "./userTier";
 export * from "./webhookAck";

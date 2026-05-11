@@ -42,6 +42,8 @@ import type {
   ListRecentJobReportsParams,
   PaymentsConfig,
   PaypalWebhookEvent,
+  StripeCheckoutInput,
+  StripeCheckoutSession,
   WebhookAck,
 } from "./api.schemas";
 
@@ -1745,6 +1747,176 @@ export const usePaypalWebhook = <
   TContext
 > => {
   return useMutation(getPaypalWebhookMutationOptions(options));
+};
+
+/**
+ * @summary Create a Stripe Checkout session (card / Apple Pay / Google Pay)
+ */
+export const getCreateStripeCheckoutUrl = () => {
+  return `/api/payments/stripe/checkout`;
+};
+
+export const createStripeCheckout = async (
+  stripeCheckoutInput: StripeCheckoutInput,
+  options?: RequestInit,
+): Promise<StripeCheckoutSession> => {
+  return customFetch<StripeCheckoutSession>(getCreateStripeCheckoutUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(stripeCheckoutInput),
+  });
+};
+
+export const getCreateStripeCheckoutMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStripeCheckout>>,
+    TError,
+    { data: BodyType<StripeCheckoutInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createStripeCheckout>>,
+  TError,
+  { data: BodyType<StripeCheckoutInput> },
+  TContext
+> => {
+  const mutationKey = ["createStripeCheckout"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createStripeCheckout>>,
+    { data: BodyType<StripeCheckoutInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createStripeCheckout(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateStripeCheckoutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createStripeCheckout>>
+>;
+export type CreateStripeCheckoutMutationBody = BodyType<StripeCheckoutInput>;
+export type CreateStripeCheckoutMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Create a Stripe Checkout session (card / Apple Pay / Google Pay)
+ */
+export const useCreateStripeCheckout = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createStripeCheckout>>,
+    TError,
+    { data: BodyType<StripeCheckoutInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createStripeCheckout>>,
+  TError,
+  { data: BodyType<StripeCheckoutInput> },
+  TContext
+> => {
+  return useMutation(getCreateStripeCheckoutMutationOptions(options));
+};
+
+/**
+ * @summary Server-verify a Stripe Checkout session result and update the user
+ */
+export const getConfirmStripeCheckoutUrl = (sessionId: string) => {
+  return `/api/payments/stripe/sessions/${sessionId}/confirm`;
+};
+
+export const confirmStripeCheckout = async (
+  sessionId: string,
+  options?: RequestInit,
+): Promise<CurrentUser> => {
+  return customFetch<CurrentUser>(getConfirmStripeCheckoutUrl(sessionId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getConfirmStripeCheckoutMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof confirmStripeCheckout>>,
+    TError,
+    { sessionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof confirmStripeCheckout>>,
+  TError,
+  { sessionId: string },
+  TContext
+> => {
+  const mutationKey = ["confirmStripeCheckout"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof confirmStripeCheckout>>,
+    { sessionId: string }
+  > = (props) => {
+    const { sessionId } = props ?? {};
+
+    return confirmStripeCheckout(sessionId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ConfirmStripeCheckoutMutationResult = NonNullable<
+  Awaited<ReturnType<typeof confirmStripeCheckout>>
+>;
+
+export type ConfirmStripeCheckoutMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Server-verify a Stripe Checkout session result and update the user
+ */
+export const useConfirmStripeCheckout = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof confirmStripeCheckout>>,
+    TError,
+    { sessionId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof confirmStripeCheckout>>,
+  TError,
+  { sessionId: string },
+  TContext
+> => {
+  return useMutation(getConfirmStripeCheckoutMutationOptions(options));
 };
 
 /**

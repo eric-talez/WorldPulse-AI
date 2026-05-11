@@ -398,6 +398,61 @@ paths:
               schema:
                 $ref: "#/components/schemas/WebhookAck"
 
+  /payments/stripe/checkout:
+    post:
+      operationId: createStripeCheckout
+      tags: [payments]
+      summary: Create a Stripe Checkout session (card / Apple Pay / Google Pay)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StripeCheckoutInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StripeCheckoutSession"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Stripe not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /payments/stripe/sessions/{sessionId}/confirm:
+    post:
+      operationId: confirmStripeCheckout
+      tags: [payments]
+      summary: Server-verify a Stripe Checkout session result and update the user
+      parameters:
+        - in: path
+          name: sessionId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+        "404":
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /dashboard/stats:
     get:
       operationId: getDashboardStats
@@ -590,9 +645,12 @@ components:
 
     ActiveSubscription:
       type: object
-      required: [paypalSubscriptionId, plan, status]
+      required: [provider, providerSubscriptionId, plan, status]
       properties:
-        paypalSubscriptionId: { type: string }
+        provider:
+          type: string
+          enum: [paypal, stripe]
+        providerSubscriptionId: { type: string }
         plan: { $ref: "#/components/schemas/UserTier" }
         status: { type: string }
         nextBillingAt:
@@ -640,7 +698,7 @@ components:
 
     PaymentsConfig:
       type: object
-      required: [clientId, env, plans]
+      required: [clientId, env, plans, paypal, stripe]
       properties:
         clientId:
           oneOf:
@@ -655,6 +713,52 @@ components:
           properties:
             pro: { $ref: "#/components/schemas/PlanInfo" }
             enterprise: { $ref: "#/components/schemas/PlanInfo" }
+        paypal:
+          type: object
+          required: [clientId, env, plans]
+          properties:
+            clientId:
+              oneOf:
+                - { type: string }
+                - { type: "null" }
+            env:
+              type: string
+              enum: [sandbox, live]
+            plans:
+              type: object
+              required: [pro, enterprise]
+              properties:
+                pro: { $ref: "#/components/schemas/PlanInfo" }
+                enterprise: { $ref: "#/components/schemas/PlanInfo" }
+        stripe:
+          type: object
+          required: [available, plans]
+          properties:
+            available: { type: boolean }
+            plans:
+              type: object
+              required: [pro, enterprise]
+              properties:
+                pro: { $ref: "#/components/schemas/PlanInfo" }
+                enterprise: { $ref: "#/components/schemas/PlanInfo" }
+
+    StripeCheckoutInput:
+      type: object
+      required: [plan, mode, successUrl, cancelUrl]
+      properties:
+        plan: { $ref: "#/components/schemas/PlanId" }
+        mode:
+          type: string
+          enum: [subscription, one_time]
+        successUrl: { type: string }
+        cancelUrl: { type: string }
+
+    StripeCheckoutSession:
+      type: object
+      required: [id, url]
+      properties:
+        id: { type: string }
+        url: { type: string }
 
     PaypalWebhookEvent:
       type: object

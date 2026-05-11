@@ -5,10 +5,12 @@
  * FutureMap AI API
  * OpenAPI spec version: 0.1.0
  */
+import type { ActiveSubscriptionProvider } from "./activeSubscriptionProvider";
 import type { UserTier } from "./userTier";
 
 export interface ActiveSubscription {
-  paypalSubscriptionId: string;
+  provider: ActiveSubscriptionProvider;
+  providerSubscriptionId: string;
   plan: UserTier;
   status: string;
   nextBillingAt?: Date | null;

@@ -17,7 +17,8 @@ export interface CurrentUser {
   createdAt: string;
   lastLoginAt: string;
   activeSubscription: null | {
-    paypalSubscriptionId: string;
+    provider: "paypal" | "stripe";
+    providerSubscriptionId: string;
     plan: Tier;
     status: string;
     nextBillingAt: string | null;
