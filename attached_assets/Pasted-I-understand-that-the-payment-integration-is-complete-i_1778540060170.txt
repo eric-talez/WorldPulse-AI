@@ -1,0 +1,41 @@
+I understand that the payment integration is complete inside the Task workspace, but the Task completion / merge step is failing with:
+
+`rebaseOnMainRepl: INVALID_REFERENCE`
+
+I was working inside a Replit Task, not directly on the main Repl. So I need help making sure the completed Task changes are actually applied to the main Repl / production deployment.
+
+Current situation:
+
+* Local Task workspace tests pass.
+* `http://127.0.0.1:8080/api/payments/config` returns the correct payment config JSON.
+* Local PayPal webhook route works.
+* Local Stripe webhook route works.
+* But the public URL still returns 404 for:
+
+  * `https://world-pulse-ai.replit.app/api/payments/config`
+  * `https://world-pulse-ai.replit.app/api/payments/webhook`
+  * `https://world-pulse-ai.replit.app/api/payments/stripe/webhook`
+
+This suggests the Task workspace has the correct code, but the main Repl / production deployment is still running old code without the payment routes.
+
+Please do NOT reimplement the payment logic.
+
+Please help me resolve the Task-to-main merge issue.
+
+Tasks:
+
+1. Confirm whether the completed payment integration currently exists only in the Task workspace.
+2. Confirm whether the main Repl currently has the same payment files/routes as the Task workspace.
+3. If the Task changes are not applied to main, please provide the safest manual way to apply them.
+4. If possible, squash the completed Task changes into one clean commit and apply them to main.
+5. If the Replit Task completion system cannot merge because of `INVALID_REFERENCE`, please give me exact manual Git commands to copy/merge the current Task workspace changes into main.
+6. Do not lose the current working payment implementation.
+7. After the changes are applied to main, redeploy the production app.
+8. Verify that the public production URL returns app-level responses:
+
+   * `GET /api/payments/config` should return JSON.
+   * `POST /api/payments/webhook` should reach the app and fail only because of missing PayPal signature.
+   * `POST /api/payments/stripe/webhook` should reach the app and fail only because of missing Stripe signature.
+9. Then give me the final webhook URLs I should register in Stripe and PayPal.
+
+Important: I already pushed a backup branch to GitHub named `payments-integration-backup`. Please use that as a safety backup if needed.
