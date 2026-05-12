@@ -1,11 +1,14 @@
 import {
   db,
   countriesTable,
+  citiesTable,
   issuesTable,
   forumPostsTable,
   jobReportsTable,
 } from "@workspace/db";
-import { analyzeJob } from "./lib/jobAnalysis";
+import { analyzeJob, analyzeSpaceJob } from "./lib/jobAnalysis";
+import { SPACE_SEED_ISSUES, PLANETS } from "./lib/planets";
+import { SEED_CITIES, SEED_CITY_ISSUES } from "./lib/citiesSeed";
 
 const COUNTRIES = [
   { code: "KR", name: "South Korea", nameKo: "대한민국", flag: "🇰🇷", latitude: 37.5665, longitude: 126.978, riskScore: 72, region: "Asia" },
@@ -120,21 +123,60 @@ const SEED_REPORTS = [
 ];
 
 async function main(): Promise<void> {
+  const existingCities = await db.select().from(citiesTable).limit(1);
   const existing = await db.select().from(countriesTable).limit(1);
-  if (existing.length > 0) {
-    console.log("Seed: countries already exist, skipping.");
+  const now = Date.now();
+  if (existing.length > 0 && existingCities.length > 0) {
+    console.log("Seed: data already exists, skipping.");
     return;
   }
 
-  console.log("Seed: inserting countries…");
-  await db.insert(countriesTable).values(COUNTRIES);
+  if (existing.length === 0) {
+    console.log("Seed: inserting countries…");
+    await db.insert(countriesTable).values(COUNTRIES);
+  }
+
+  if (existingCities.length === 0) {
+    console.log("Seed: inserting cities…");
+    await db.insert(citiesTable).values(SEED_CITIES);
+
+    console.log("Seed: inserting city issues…");
+    await db.insert(issuesTable).values(
+      SEED_CITY_ISSUES.map((iss, idx) => ({
+        cityId: iss.cityId,
+        countryCode: iss.cityId.split("-")[0],
+        planet: "earth" as const,
+        category: iss.category,
+        headline: iss.headline,
+        body: iss.body,
+        publishedAt: new Date(now - idx * 1000 * 60 * 9),
+      })),
+    );
+  }
+
+  if (existing.length > 0) {
+    console.log("Seed: country issues already present, skipping.");
+    return;
+  }
 
   console.log("Seed: inserting issues…");
-  const now = Date.now();
   await db.insert(issuesTable).values(
     ISSUES.map((iss, idx) => ({
       ...iss,
+      planet: "earth" as const,
       publishedAt: new Date(now - idx * 1000 * 60 * 17),
+    })),
+  );
+
+  console.log("Seed: inserting space (moon/mars) signals…");
+  await db.insert(issuesTable).values(
+    SPACE_SEED_ISSUES.map((iss, idx) => ({
+      countryCode: iss.countryCode,
+      planet: iss.planet,
+      category: iss.category,
+      headline: iss.headline,
+      body: iss.body,
+      publishedAt: new Date(now - idx * 1000 * 60 * 53),
     })),
   );
 
@@ -155,6 +197,32 @@ async function main(): Promise<void> {
       jobName: r.jobName,
       countryCode: country.code,
       countryName: country.nameKo,
+      planet: "earth",
+      ...result,
+    });
+  }
+
+  console.log("Seed: generating sample space job reports…");
+  const spaceSeedReports: Array<{
+    jobName: string;
+    planet: "moon" | "mars";
+    locationCode: string;
+  }> = [
+    { jobName: "우주 건설 엔지니어", planet: "moon", locationCode: "MOON-ARTEMIS" },
+    { jobName: "원격 로봇 오퍼레이터", planet: "moon", locationCode: "MOON-MAREIMBRIUM" },
+    { jobName: "행성 지질학자", planet: "mars", locationCode: "MARS-OLYMPUS" },
+    { jobName: "우주 농업 전문가", planet: "mars", locationCode: "MARS-COLONY-A" },
+  ];
+  for (const r of spaceSeedReports) {
+    const loc = PLANETS[r.planet].locations.find(
+      (l) => l.code === r.locationCode,
+    )!;
+    const result = analyzeSpaceJob(r.jobName, loc.code, loc.nameKo);
+    await db.insert(jobReportsTable).values({
+      jobName: r.jobName,
+      countryCode: loc.code,
+      countryName: loc.nameKo,
+      planet: r.planet,
       ...result,
     });
   }

@@ -5,12 +5,14 @@
  * FutureMap AI API
  * OpenAPI spec version: 0.1.0
  */
+import type { Planet } from "./planet";
 
 export interface JobReport {
   id: string;
   jobName: string;
   countryCode: string;
   countryName: string;
+  planet: Planet;
   /**
    * @minimum 0
    * @maximum 100

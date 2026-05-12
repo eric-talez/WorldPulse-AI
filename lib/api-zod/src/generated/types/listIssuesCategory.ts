@@ -22,4 +22,7 @@ export const ListIssuesCategory = {
   cyber: "cyber",
   terror: "terror",
   climate: "climate",
+  space: "space",
+  lunar_base: "lunar_base",
+  mars_habitat: "mars_habitat",
 } as const;

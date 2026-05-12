@@ -5,6 +5,10 @@ import issuesRouter from "./issues";
 import jobsRouter from "./jobs";
 import forumRouter from "./forum";
 import dashboardRouter from "./dashboard";
+import planetsRouter from "./planets";
+import forecastsRouter from "./forecasts";
+import citiesRouter from "./cities";
+import countryBannersRouter from "./countryBanners";
 import authRouter from "./auth";
 import paymentsRouter from "./payments";
 
@@ -16,6 +20,10 @@ router.use(issuesRouter);
 router.use(jobsRouter);
 router.use(forumRouter);
 router.use(dashboardRouter);
+router.use(planetsRouter);
+router.use(forecastsRouter);
+router.use(citiesRouter);
+router.use(countryBannersRouter);
 router.use(authRouter);
 router.use(paymentsRouter);
 

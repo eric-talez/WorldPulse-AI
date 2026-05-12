@@ -5,6 +5,7 @@ export const jobReportsTable = pgTable("job_reports", {
   jobName: text("job_name").notNull(),
   countryCode: text("country_code").notNull(),
   countryName: text("country_name").notNull(),
+  planet: text("planet").notNull().default("earth"),
   automationRisk: integer("automation_risk").notNull(),
   growthScore: integer("growth_score").notNull(),
   summary: text("summary").notNull(),

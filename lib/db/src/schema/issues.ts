@@ -3,6 +3,8 @@ import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 export const issuesTable = pgTable("issues", {
   id: uuid("id").primaryKey().defaultRandom(),
   countryCode: text("country_code").notNull(),
+  cityId: text("city_id"),
+  planet: text("planet").notNull().default("earth"),
   category: text("category").notNull(),
   headline: text("headline").notNull(),
   body: text("body"),

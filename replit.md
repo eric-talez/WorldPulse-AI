@@ -27,11 +27,13 @@ A bilingual (KO/EN) global issue map and AI-driven job future report platform. U
 ## Where things live
 
 - API spec: `lib/api-spec/openapi.yaml` (single source of truth)
-- DB schema: `lib/db/src/schema/` — `countries`, `issues`, `jobReports`, `forumPosts`, `users`, `paymentSessions`, `subscriptions` (both payment tables are provider-agnostic with a `provider` column = `paypal`|`stripe`)
-- API routes: `artifacts/api-server/src/routes/` — `countries`, `issues`, `jobs`, `forum`, `dashboard`, `health`, `auth`, `payments`
+- DB schema: `lib/db/src/schema/` — `countries`, `cities`, `issues`, `jobReports`, `forumPosts`, `forumReplies`, `countryBanners`, `forecasts`, `users`, `paymentSessions`, `subscriptions` (issues/jobReports carry a `planet` column, default `'earth'`; issues carry an optional `cityId`; both payment tables are provider-agnostic with a `provider` column = `paypal`|`stripe`)
+- API routes: `artifacts/api-server/src/routes/` — `countries`, `cities` (`/countries/:code/cities`, `/cities/:id/issues`), `issues` (`/issues`, `/issues/summary`, `/issues/:id` — `summary` route is registered before `:id` so Express matches it first), `jobs`, `forum`, `dashboard`, `planets`, `forecasts`, `countryBanners`, `auth`, `payments`, `health`
+- City seed data: `artifacts/api-server/src/lib/citiesSeed.ts` (~55 cities + ~95 city-tagged issues across 14 countries)
+- Planet catalog (Earth/Moon/Mars + Moon & Mars locations + NASA Trek imagery URLs + space-only signal categories): `artifacts/api-server/src/lib/planets.ts`
 - Auth/payments libs: `artifacts/api-server/src/lib/` — `session.ts` (HMAC-signed cookie session + nonce), `paypal.ts` (REST client + webhook verify), `stripe.ts` + `stripeClient.ts` (Replit-connector-backed client + Checkout sessions + webhook verify), `userTier.ts` (user upsert + tier helpers)
 - Frontend auth: `artifacts/futuremap/src/lib/auth.tsx` (AuthProvider, useAuth), `lib/wallet.ts` (window.ethereum + viem), `components/layout/WalletButton.tsx`
-- Job analysis heuristic: `artifacts/api-server/src/lib/jobAnalysis.ts` — keyword classify (tax/dev/nurse/marketing/designer/default) → JobProfile
+- Job analysis heuristic: `artifacts/api-server/src/lib/jobAnalysis.ts` — keyword classify (tax/dev/nurse/marketing/designer/default) → JobProfile; space planets route through `analyzeSpaceJob()` with SPACE_PROFILES (space_construction/geology/robotics/agriculture/default) and `PLANET_LOCATION_CONTEXT_KO`
 - Frontend pages: `artifacts/futuremap/src/pages/` — `Home` (globe + signal stream), `JobReport`, `Forum`, `About`
 - Frontend i18n: `artifacts/futuremap/src/lib/language.tsx`
 - Reference mockup (canvas): `artifacts/mockup-sandbox/src/components/mockups/futuremap/FutureMap.tsx`
@@ -39,7 +41,9 @@ A bilingual (KO/EN) global issue map and AI-driven job future report platform. U
 ## Architecture decisions
 
 - CesiumJS is loaded via CDN script tags at runtime (not as an npm dep) — its Vite integration is fragile. Init is wrapped in a WebGL pre-flight + capture-phase error swallow so it degrades gracefully on headless/no-WebGL clients.
-- Job future analysis is a deterministic keyword-based heuristic, not an LLM call — keeps the platform offline-friendly and instant. Country-specific opportunities are templated per ISO code with a default fallback.
+- Earth uses cinematic atmospherics with **no ion token required**: built-in starfield skyBox, sky atmosphere shell with tinted hue/saturation, sun-direction `dynamicAtmosphereLighting`, HDR tonemapping (`scene.highDynamicRange`), distance fog, and a second imagery layer overlay (ESRI `World_Boundaries_and_Places`, alpha 0.85) for country borders, place names, and roads. Moon/Mars deliberately keep `skyBox: false` and `skyAtmosphere: false` to read as airless. True 3D world terrain (`createWorldTerrainAsync`) and Cesium OSM Buildings require a Cesium ion access token — not enabled.
+- The viewer is fully torn down and rebuilt on planet switch, with a per-planet `Cesium.Ellipsoid(r,r,r)` (Moon 1,737,400m / Mars 3,396,000m) and a `UrlTemplateImageryProvider`. Earth uses **ESRI World Imagery** (public, no ion token, WebMercator); Moon/Mars use **NASA Trek WMTS** tiles with `GeographicTilingScheme` + `maximumLevel: 7`. Each provider's `errorEvent` is wired to log once and degrade to the per-planet `globe.baseColor`. Never pass `imageryProvider: false` for a planet you actually want imagery on — that disables the default base layer and leaves a flat-colored sphere. Atmosphere/lighting are Earth-only. The Earth `baseLayer` color tweaks (`brightness/contrast/saturation/gamma`) are tuned **for ESRI's natural-color tiles** — if you swap the Earth imagery source, retune these values or continents will crush down to the same blue as the ocean.
+- Job future analysis is a deterministic keyword-based heuristic, not an LLM call — keeps the platform offline-friendly and instant. Country-specific opportunities are templated per ISO code with a default fallback. When the request carries a non-Earth `planet`, we instead pick from `SPACE_PROFILES` and the per-location `PLANET_LOCATION_CONTEXT_KO` opportunities.
 - Country detail page derives top-risk / top-growth jobs from the running average of recent `jobReports` for that country, with a curated fallback list when no reports exist yet.
 - Bilingual UI is client-side only — Korean strings are the primary copy and sit alongside English in a small dictionary in `lib/language.tsx`. Country `nameKo` is also persisted in the DB.
 - Auth = SIWE-style wallet sign-in. Nonce is issued in an HMAC-signed httpOnly cookie (so the server is stateless), the wallet signs a SIWE message containing the nonce, and the server verifies via viem's `verifyMessage`. Session is a separate signed cookie carrying the lowercase wallet address. No `siwe` npm package — it pulls ethers as a peer dep; rolling our own SIWE message is two dozen lines.
@@ -47,10 +51,11 @@ A bilingual (KO/EN) global issue map and AI-driven job future report platform. U
 
 ## Product
 
-- `/` — 3D globe with country pins colored by risk score; click a pin → country panel with summary, top automation-risk jobs, top growth jobs. Live signal stream of recent issues, filterable by category (news / conflict / disease / politics / economy / culture / ai_jobs / tech). Stats ribbon (countries / issues today / reports generated).
+- `/` — 3D globe with click-only drilldown: planet → country → city → event. Country pins colored by risk; clicking a country flies to ~1,500km, loads city pins; clicking a city flies to ~50km and shows the city's signals; clicking an event flies to ~25km and opens the event detail. Top-center breadcrumb shows the current path and each crumb is clickable to jump back. Bottom-right control cluster: Home (return to whole planet), Back (one level up), Zoom +/−. URL is kept in sync via `?planet=&country=&city=&location=&issue=`. When WebGL is unavailable the page falls back to a hierarchical click-only list (countries → cities → events). Live signal stream of recent issues, filterable by category. Stats ribbon (countries / issues today / reports generated).
 - `/job` — Type a job + pick a country → AI future report (automation risk %, growth %, automated tasks, human strengths, future changes, recommended skills, country-specific opportunities). Recently generated reports rail.
-- `/forum` — Country-segmented discussion board with post composer.
-- `/about` — Manifesto + pricing tiers (Free / Pro / Enterprise) with PayPal checkout (monthly subscription or one-time) gated on wallet connection.
+- `/forum` — Country-segmented discussion board with post composer. When a country tab is selected, active banners for that country render above the post list (admin-managed at `/admin`). Posts open a dialog with full body, threaded replies (대댓글, indented up to 4 levels), and inline composers for top-level + nested replies.
+- `/admin` — Admin console for managing country banners (CRUD, toggle active/inactive, grouped by country).
+- `/about` — Manifesto + pricing tiers (Free / Pro / Enterprise) with Stripe Checkout (primary) + PayPal (secondary), gated on wallet sign-in.
 - Header — wallet connect button (MetaMask et al.) showing short address + tier badge once signed in.
 
 ## User preferences

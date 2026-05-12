@@ -14,6 +14,9 @@ tags:
   - name: jobs
   - name: forum
   - name: dashboard
+  - name: planets
+  - name: forecasts
+  - name: cities
   - name: auth
   - name: payments
 paths:
@@ -69,18 +72,87 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /countries/{code}/cities:
+    get:
+      operationId: listCountryCities
+      tags: [countries, cities]
+      summary: List curated cities for a given country
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/City"
+
+  /cities/{id}/issues:
+    get:
+      operationId: listCityIssues
+      tags: [cities, issues]
+      summary: Issues attached to a specific city
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Issue"
+
+  /issues/{id}:
+    get:
+      operationId: getIssue
+      tags: [issues]
+      summary: Single issue / signal detail
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /issues:
     get:
       operationId: listIssues
       tags: [issues]
-      summary: Global signal stream of issues, filterable by category and country
+      summary: Global signal stream of issues, filterable by planet, category and country
       parameters:
+        - in: query
+          name: planet
+          required: false
+          schema:
+            $ref: "#/components/schemas/Planet"
         - in: query
           name: category
           required: false
           schema:
             type: string
-            enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech, natural_disaster, cyber, terror, climate]
+            enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech, natural_disaster, cyber, terror, climate, space, lunar_base, mars_habitat]
         - in: query
           name: country
           required: false
@@ -104,6 +176,12 @@ paths:
       operationId: getIssueSummary
       tags: [issues, dashboard]
       summary: Counts of issues per category for the global signal stream
+      parameters:
+        - in: query
+          name: planet
+          required: false
+          schema:
+            $ref: "#/components/schemas/Planet"
       responses:
         "200":
           description: OK
@@ -139,6 +217,11 @@ paths:
       tags: [jobs, dashboard]
       summary: Recent job future reports generated across all users
       parameters:
+        - in: query
+          name: planet
+          required: false
+          schema:
+            $ref: "#/components/schemas/Planet"
         - in: query
           name: limit
           required: false
@@ -189,6 +272,242 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ForumPost"
+
+  /forum/posts/{postId}/replies:
+    get:
+      operationId: listForumReplies
+      tags: [forum]
+      summary: List replies for a forum post (flat list, ordered oldest first)
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ForumReply"
+    post:
+      operationId: createForumReply
+      tags: [forum]
+      summary: Add a reply (or nested reply) to a forum post
+      parameters:
+        - in: path
+          name: postId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForumReplyInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForumReply"
+
+  /forum/banners:
+    get:
+      operationId: listCountryBanners
+      tags: [forum]
+      summary: List active banners for a country (or all if no country given)
+      parameters:
+        - in: query
+          name: country
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CountryBanner"
+
+  /admin/country-banners:
+    get:
+      operationId: adminListCountryBanners
+      tags: [forum]
+      summary: Admin — list all country banners (active and inactive)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CountryBanner"
+    post:
+      operationId: adminCreateCountryBanner
+      tags: [forum]
+      summary: Admin — create a new country banner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CountryBannerInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountryBanner"
+
+  /admin/country-banners/{id}:
+    patch:
+      operationId: adminUpdateCountryBanner
+      tags: [forum]
+      summary: Admin — update a country banner
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CountryBannerUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CountryBanner"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: adminDeleteCountryBanner
+      tags: [forum]
+      summary: Admin — delete a country banner
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /planets:
+    get:
+      operationId: listPlanets
+      tags: [planets]
+      summary: Available planets with metadata, locations and signal categories
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlanetInfo"
+
+  /planets/{planet}/locations/{code}:
+    get:
+      operationId: getPlanetLocation
+      tags: [planets]
+      summary: Detail for a non-Earth planet location with related signals
+      parameters:
+        - in: path
+          name: planet
+          required: true
+          schema:
+            $ref: "#/components/schemas/Planet"
+        - in: path
+          name: code
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanetLocationDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /forecasts:
+    get:
+      operationId: listForecasts
+      tags: [forecasts]
+      summary: Heuristic predicted-news signals derived from recent issues
+      parameters:
+        - in: query
+          name: planet
+          required: false
+          schema:
+            $ref: "#/components/schemas/Planet"
+        - in: query
+          name: countryCode
+          required: false
+          schema: { type: string }
+        - in: query
+          name: category
+          required: false
+          schema:
+            type: string
+            enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech, natural_disaster, cyber, terror, climate, space, lunar_base, mars_habitat]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Forecast"
+
+  /forecasts/accuracy:
+    get:
+      operationId: getForecastAccuracy
+      tags: [forecasts]
+      summary: Track-record accuracy of past forecasts whose horizon has elapsed
+      parameters:
+        - in: query
+          name: planet
+          required: false
+          schema:
+            $ref: "#/components/schemas/Planet"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastAccuracy"
 
   /auth/nonce:
     post:
@@ -458,6 +777,12 @@ paths:
       operationId: getDashboardStats
       tags: [dashboard]
       summary: Top-level platform stats — total countries, issues, jobs analyzed, forum posts
+      parameters:
+        - in: query
+          name: planet
+          required: false
+          schema:
+            $ref: "#/components/schemas/Planet"
       responses:
         "200":
           description: OK
@@ -515,18 +840,33 @@ components:
 
     Issue:
       type: object
-      required: [id, countryCode, countryFlag, category, headline, publishedAt]
+      required: [id, countryCode, countryFlag, category, headline, planet, publishedAt]
       properties:
         id: { type: string }
         countryCode: { type: string }
         countryFlag: { type: string }
+        cityId: { type: ["string", "null"] }
+        planet: { $ref: "#/components/schemas/Planet" }
         category:
           type: string
-          enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech, natural_disaster, cyber, terror, climate]
+          enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech, natural_disaster, cyber, terror, climate, space, lunar_base, mars_habitat]
         headline: { type: string }
         body: { type: ["string", "null"] }
         sourceUrl: { type: ["string", "null"] }
         publishedAt: { type: string, format: date-time }
+
+    City:
+      type: object
+      required: [id, countryCode, name, nameKo, latitude, longitude, importance]
+      properties:
+        id: { type: string }
+        countryCode: { type: string }
+        name: { type: string }
+        nameKo: { type: string }
+        latitude: { type: number }
+        longitude: { type: number }
+        population: { type: integer, minimum: 0 }
+        importance: { type: integer, minimum: 0, maximum: 100 }
 
     CategoryCount:
       type: object
@@ -534,8 +874,55 @@ components:
       properties:
         category:
           type: string
-          enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech, natural_disaster, cyber, terror, climate]
+          enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech, natural_disaster, cyber, terror, climate, space, lunar_base, mars_habitat]
         count: { type: integer, minimum: 0 }
+
+    Planet:
+      type: string
+      enum: [earth, moon, mars]
+
+    PlanetLocation:
+      type: object
+      required: [code, planet, name, nameKo, flag, latitude, longitude, descriptionKo, description]
+      properties:
+        code: { type: string }
+        planet: { $ref: "#/components/schemas/Planet" }
+        name: { type: string }
+        nameKo: { type: string }
+        flag: { type: string }
+        latitude: { type: number }
+        longitude: { type: number }
+        description: { type: string }
+        descriptionKo: { type: string }
+
+    PlanetInfo:
+      type: object
+      required: [planet, label, labelKo, emoji, ellipsoidRadius, baseColor, locations, signalCategories]
+      properties:
+        planet: { $ref: "#/components/schemas/Planet" }
+        label: { type: string }
+        labelKo: { type: string }
+        emoji: { type: string }
+        ellipsoidRadius: { type: number }
+        imageryUrl: { type: ["string", "null"] }
+        baseColor: { type: string }
+        tagline: { type: string }
+        taglineKo: { type: string }
+        locations:
+          type: array
+          items: { $ref: "#/components/schemas/PlanetLocation" }
+        signalCategories:
+          type: array
+          items: { type: string }
+
+    PlanetLocationDetail:
+      type: object
+      required: [location, signals]
+      properties:
+        location: { $ref: "#/components/schemas/PlanetLocation" }
+        signals:
+          type: array
+          items: { $ref: "#/components/schemas/Issue" }
 
     JobAnalyzeInput:
       type: object
@@ -543,6 +930,7 @@ components:
       properties:
         jobName: { type: string, minLength: 1 }
         countryCode: { type: string, minLength: 2 }
+        planet: { $ref: "#/components/schemas/Planet" }
 
     JobReport:
       type: object
@@ -551,6 +939,7 @@ components:
         - jobName
         - countryCode
         - countryName
+        - planet
         - automationRisk
         - growthScore
         - summary
@@ -565,6 +954,7 @@ components:
         jobName: { type: string }
         countryCode: { type: string }
         countryName: { type: string }
+        planet: { $ref: "#/components/schemas/Planet" }
         automationRisk: { type: integer, minimum: 0, maximum: 100 }
         growthScore: { type: integer, minimum: 0, maximum: 100 }
         summary: { type: string }
@@ -605,6 +995,104 @@ components:
         author: { type: string, minLength: 1 }
         title: { type: string, minLength: 1 }
         body: { type: string }
+
+    ForumReply:
+      type: object
+      required: [id, postId, author, body, createdAt]
+      properties:
+        id: { type: string }
+        postId: { type: string }
+        parentReplyId: { type: ["string", "null"] }
+        author: { type: string }
+        body: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    ForumReplyInput:
+      type: object
+      required: [author, body]
+      properties:
+        author: { type: string, minLength: 1 }
+        body: { type: string, minLength: 1 }
+        parentReplyId: { type: string }
+
+    CountryBanner:
+      type: object
+      required: [id, countryCode, title, imageUrl, active, createdAt]
+      properties:
+        id: { type: string }
+        countryCode: { type: string }
+        title: { type: string }
+        subtitle: { type: ["string", "null"] }
+        imageUrl: { type: string }
+        linkUrl: { type: ["string", "null"] }
+        active: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    CountryBannerInput:
+      type: object
+      required: [countryCode, title, imageUrl]
+      properties:
+        countryCode: { type: string, minLength: 2 }
+        title: { type: string, minLength: 1 }
+        subtitle: { type: string }
+        imageUrl: { type: string, minLength: 1 }
+        linkUrl: { type: string }
+        active: { type: boolean }
+
+    CountryBannerUpdate:
+      type: object
+      properties:
+        countryCode: { type: string, minLength: 2 }
+        title: { type: string, minLength: 1 }
+        subtitle: { type: ["string", "null"] }
+        imageUrl: { type: string, minLength: 1 }
+        linkUrl: { type: ["string", "null"] }
+        active: { type: boolean }
+
+    ForecastEvidence:
+      type: object
+      required: [id, headline, category, publishedAt]
+      properties:
+        id: { type: string }
+        headline: { type: string }
+        category:
+          type: string
+          enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech, natural_disaster, cyber, terror, climate, space, lunar_base, mars_habitat]
+        publishedAt: { type: string, format: date-time }
+
+    Forecast:
+      type: object
+      required: [id, planet, countryCode, countryFlag, category, headlineKo, headlineEn, confidence, horizon, factors, evidence]
+      properties:
+        id: { type: string }
+        planet: { $ref: "#/components/schemas/Planet" }
+        countryCode: { type: string }
+        countryFlag: { type: string }
+        category:
+          type: string
+          enum: [news, conflict, disease, politics, economy, culture, ai_jobs, tech, natural_disaster, cyber, terror, climate, space, lunar_base, mars_habitat]
+        headlineKo: { type: string }
+        headlineEn: { type: string }
+        confidence: { type: integer, minimum: 0, maximum: 100 }
+        horizon:
+          type: string
+          enum: ["24h", "week", "month"]
+        factors:
+          type: array
+          items: { type: string }
+        evidence:
+          type: array
+          items: { $ref: "#/components/schemas/ForecastEvidence" }
+
+    ForecastAccuracy:
+      type: object
+      required: [resolved, hits, misses, accuracy, windowDays]
+      properties:
+        resolved: { type: integer, minimum: 0, description: "Forecasts whose horizon has elapsed and have been scored" }
+        hits: { type: integer, minimum: 0 }
+        misses: { type: integer, minimum: 0 }
+        accuracy: { type: integer, minimum: 0, maximum: 100, description: "Percent hit rate (0 if no resolved forecasts)" }
+        windowDays: { type: integer, minimum: 1, description: "Look-back window for the recent track record" }
 
     AuthNonceInput:
       type: object

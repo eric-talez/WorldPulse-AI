@@ -6,8 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ListIssuesCategory } from "./listIssuesCategory";
+import type { Planet } from "./planet";
 
 export type ListIssuesParams = {
+  planet?: Planet;
   category?: ListIssuesCategory;
   country?: string;
   /**

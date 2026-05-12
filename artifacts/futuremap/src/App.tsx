@@ -7,6 +7,7 @@ import Home from "@/pages/Home";
 import JobReport from "@/pages/JobReport";
 import Forum from "@/pages/Forum";
 import About from "@/pages/About";
+import Admin from "@/pages/Admin";
 import Layout from "@/components/layout/Layout";
 import { LanguageProvider } from "@/lib/language";
 import { AuthProvider } from "@/lib/auth";
@@ -21,6 +22,7 @@ function Router() {
         <Route path="/job" component={JobReport} />
         <Route path="/forum" component={Forum} />
         <Route path="/about" component={About} />
+        <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

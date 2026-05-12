@@ -6,11 +6,15 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { IssueCategory } from "./issueCategory";
+import type { Planet } from "./planet";
 
 export interface Issue {
   id: string;
   countryCode: string;
   countryFlag: string;
+  /** @nullable */
+  cityId?: string | null;
+  planet: Planet;
   category: IssueCategory;
   headline: string;
   /** @nullable */

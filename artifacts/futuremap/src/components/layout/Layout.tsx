@@ -13,6 +13,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/job", label: t("리포트", "Reports") },
     { href: "/forum", label: t("포럼", "Forum") },
     { href: "/about", label: t("요금제", "Pricing") },
+    { href: "/admin", label: t("관리자", "Admin") },
   ];
 
   return (

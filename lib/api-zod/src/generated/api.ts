@@ -87,12 +87,118 @@ export const GetCountryResponse = zod.object({
 });
 
 /**
- * @summary Global signal stream of issues, filterable by category and country
+ * @summary List curated cities for a given country
+ */
+export const ListCountryCitiesParams = zod.object({
+  code: zod.coerce.string(),
+});
+
+export const listCountryCitiesResponsePopulationMin = 0;
+
+export const listCountryCitiesResponseImportanceMin = 0;
+export const listCountryCitiesResponseImportanceMax = 100;
+
+export const ListCountryCitiesResponseItem = zod.object({
+  id: zod.string(),
+  countryCode: zod.string(),
+  name: zod.string(),
+  nameKo: zod.string(),
+  latitude: zod.number(),
+  longitude: zod.number(),
+  population: zod
+    .number()
+    .min(listCountryCitiesResponsePopulationMin)
+    .optional(),
+  importance: zod
+    .number()
+    .min(listCountryCitiesResponseImportanceMin)
+    .max(listCountryCitiesResponseImportanceMax),
+});
+export const ListCountryCitiesResponse = zod.array(
+  ListCountryCitiesResponseItem,
+);
+
+/**
+ * @summary Issues attached to a specific city
+ */
+export const ListCityIssuesParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ListCityIssuesResponseItem = zod.object({
+  id: zod.string(),
+  countryCode: zod.string(),
+  countryFlag: zod.string(),
+  cityId: zod.string().nullish(),
+  planet: zod.enum(["earth", "moon", "mars"]),
+  category: zod.enum([
+    "news",
+    "conflict",
+    "disease",
+    "politics",
+    "economy",
+    "culture",
+    "ai_jobs",
+    "tech",
+    "natural_disaster",
+    "cyber",
+    "terror",
+    "climate",
+    "space",
+    "lunar_base",
+    "mars_habitat",
+  ]),
+  headline: zod.string(),
+  body: zod.string().nullish(),
+  sourceUrl: zod.string().nullish(),
+  publishedAt: zod.coerce.date(),
+});
+export const ListCityIssuesResponse = zod.array(ListCityIssuesResponseItem);
+
+/**
+ * @summary Single issue / signal detail
+ */
+export const GetIssueParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetIssueResponse = zod.object({
+  id: zod.string(),
+  countryCode: zod.string(),
+  countryFlag: zod.string(),
+  cityId: zod.string().nullish(),
+  planet: zod.enum(["earth", "moon", "mars"]),
+  category: zod.enum([
+    "news",
+    "conflict",
+    "disease",
+    "politics",
+    "economy",
+    "culture",
+    "ai_jobs",
+    "tech",
+    "natural_disaster",
+    "cyber",
+    "terror",
+    "climate",
+    "space",
+    "lunar_base",
+    "mars_habitat",
+  ]),
+  headline: zod.string(),
+  body: zod.string().nullish(),
+  sourceUrl: zod.string().nullish(),
+  publishedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Global signal stream of issues, filterable by planet, category and country
  */
 export const listIssuesQueryLimitDefault = 30;
 export const listIssuesQueryLimitMax = 100;
 
 export const ListIssuesQueryParams = zod.object({
+  planet: zod.enum(["earth", "moon", "mars"]).optional(),
   category: zod
     .enum([
       "news",
@@ -107,6 +213,9 @@ export const ListIssuesQueryParams = zod.object({
       "cyber",
       "terror",
       "climate",
+      "space",
+      "lunar_base",
+      "mars_habitat",
     ])
     .optional(),
   country: zod.coerce.string().optional(),
@@ -121,6 +230,8 @@ export const ListIssuesResponseItem = zod.object({
   id: zod.string(),
   countryCode: zod.string(),
   countryFlag: zod.string(),
+  cityId: zod.string().nullish(),
+  planet: zod.enum(["earth", "moon", "mars"]),
   category: zod.enum([
     "news",
     "conflict",
@@ -134,6 +245,9 @@ export const ListIssuesResponseItem = zod.object({
     "cyber",
     "terror",
     "climate",
+    "space",
+    "lunar_base",
+    "mars_habitat",
   ]),
   headline: zod.string(),
   body: zod.string().nullish(),
@@ -145,6 +259,10 @@ export const ListIssuesResponse = zod.array(ListIssuesResponseItem);
 /**
  * @summary Counts of issues per category for the global signal stream
  */
+export const GetIssueSummaryQueryParams = zod.object({
+  planet: zod.enum(["earth", "moon", "mars"]).optional(),
+});
+
 export const getIssueSummaryResponseCountMin = 0;
 
 export const GetIssueSummaryResponseItem = zod.object({
@@ -161,6 +279,9 @@ export const GetIssueSummaryResponseItem = zod.object({
     "cyber",
     "terror",
     "climate",
+    "space",
+    "lunar_base",
+    "mars_habitat",
   ]),
   count: zod.number().min(getIssueSummaryResponseCountMin),
 });
@@ -175,6 +296,7 @@ export const analyzeJobBodyCountryCodeMin = 2;
 export const AnalyzeJobBody = zod.object({
   jobName: zod.string().min(1),
   countryCode: zod.string().min(analyzeJobBodyCountryCodeMin),
+  planet: zod.enum(["earth", "moon", "mars"]).optional(),
 });
 
 export const analyzeJobResponseAutomationRiskMin = 0;
@@ -188,6 +310,7 @@ export const AnalyzeJobResponse = zod.object({
   jobName: zod.string(),
   countryCode: zod.string(),
   countryName: zod.string(),
+  planet: zod.enum(["earth", "moon", "mars"]),
   automationRisk: zod
     .number()
     .min(analyzeJobResponseAutomationRiskMin)
@@ -212,6 +335,7 @@ export const listRecentJobReportsQueryLimitDefault = 8;
 export const listRecentJobReportsQueryLimitMax = 50;
 
 export const ListRecentJobReportsQueryParams = zod.object({
+  planet: zod.enum(["earth", "moon", "mars"]).optional(),
   limit: zod.coerce
     .number()
     .min(1)
@@ -230,6 +354,7 @@ export const ListRecentJobReportsResponseItem = zod.object({
   jobName: zod.string(),
   countryCode: zod.string(),
   countryName: zod.string(),
+  planet: zod.enum(["earth", "moon", "mars"]),
   automationRisk: zod
     .number()
     .min(listRecentJobReportsResponseAutomationRiskMin)
@@ -280,6 +405,330 @@ export const CreateForumPostBody = zod.object({
   author: zod.string().min(1),
   title: zod.string().min(1),
   body: zod.string().optional(),
+});
+
+/**
+ * @summary List replies for a forum post (flat list, ordered oldest first)
+ */
+export const ListForumRepliesParams = zod.object({
+  postId: zod.coerce.string(),
+});
+
+export const ListForumRepliesResponseItem = zod.object({
+  id: zod.string(),
+  postId: zod.string(),
+  parentReplyId: zod.string().nullish(),
+  author: zod.string(),
+  body: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListForumRepliesResponse = zod.array(ListForumRepliesResponseItem);
+
+/**
+ * @summary Add a reply (or nested reply) to a forum post
+ */
+export const CreateForumReplyParams = zod.object({
+  postId: zod.coerce.string(),
+});
+
+export const CreateForumReplyBody = zod.object({
+  author: zod.string().min(1),
+  body: zod.string().min(1),
+  parentReplyId: zod.string().optional(),
+});
+
+/**
+ * @summary List active banners for a country (or all if no country given)
+ */
+export const ListCountryBannersQueryParams = zod.object({
+  country: zod.coerce.string().optional(),
+});
+
+export const ListCountryBannersResponseItem = zod.object({
+  id: zod.string(),
+  countryCode: zod.string(),
+  title: zod.string(),
+  subtitle: zod.string().nullish(),
+  imageUrl: zod.string(),
+  linkUrl: zod.string().nullish(),
+  active: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+export const ListCountryBannersResponse = zod.array(
+  ListCountryBannersResponseItem,
+);
+
+/**
+ * @summary Admin — list all country banners (active and inactive)
+ */
+export const AdminListCountryBannersResponseItem = zod.object({
+  id: zod.string(),
+  countryCode: zod.string(),
+  title: zod.string(),
+  subtitle: zod.string().nullish(),
+  imageUrl: zod.string(),
+  linkUrl: zod.string().nullish(),
+  active: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+export const AdminListCountryBannersResponse = zod.array(
+  AdminListCountryBannersResponseItem,
+);
+
+/**
+ * @summary Admin — create a new country banner
+ */
+export const adminCreateCountryBannerBodyCountryCodeMin = 2;
+
+export const AdminCreateCountryBannerBody = zod.object({
+  countryCode: zod.string().min(adminCreateCountryBannerBodyCountryCodeMin),
+  title: zod.string().min(1),
+  subtitle: zod.string().optional(),
+  imageUrl: zod.string().min(1),
+  linkUrl: zod.string().optional(),
+  active: zod.boolean().optional(),
+});
+
+/**
+ * @summary Admin — update a country banner
+ */
+export const AdminUpdateCountryBannerParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const adminUpdateCountryBannerBodyCountryCodeMin = 2;
+
+export const AdminUpdateCountryBannerBody = zod.object({
+  countryCode: zod
+    .string()
+    .min(adminUpdateCountryBannerBodyCountryCodeMin)
+    .optional(),
+  title: zod.string().min(1).optional(),
+  subtitle: zod.string().nullish(),
+  imageUrl: zod.string().min(1).optional(),
+  linkUrl: zod.string().nullish(),
+  active: zod.boolean().optional(),
+});
+
+export const AdminUpdateCountryBannerResponse = zod.object({
+  id: zod.string(),
+  countryCode: zod.string(),
+  title: zod.string(),
+  subtitle: zod.string().nullish(),
+  imageUrl: zod.string(),
+  linkUrl: zod.string().nullish(),
+  active: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Admin — delete a country banner
+ */
+export const AdminDeleteCountryBannerParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
+ * @summary Available planets with metadata, locations and signal categories
+ */
+export const ListPlanetsResponseItem = zod.object({
+  planet: zod.enum(["earth", "moon", "mars"]),
+  label: zod.string(),
+  labelKo: zod.string(),
+  emoji: zod.string(),
+  ellipsoidRadius: zod.number(),
+  imageryUrl: zod.string().nullish(),
+  baseColor: zod.string(),
+  tagline: zod.string().optional(),
+  taglineKo: zod.string().optional(),
+  locations: zod.array(
+    zod.object({
+      code: zod.string(),
+      planet: zod.enum(["earth", "moon", "mars"]),
+      name: zod.string(),
+      nameKo: zod.string(),
+      flag: zod.string(),
+      latitude: zod.number(),
+      longitude: zod.number(),
+      description: zod.string(),
+      descriptionKo: zod.string(),
+    }),
+  ),
+  signalCategories: zod.array(zod.string()),
+});
+export const ListPlanetsResponse = zod.array(ListPlanetsResponseItem);
+
+/**
+ * @summary Detail for a non-Earth planet location with related signals
+ */
+export const GetPlanetLocationParams = zod.object({
+  planet: zod.enum(["earth", "moon", "mars"]),
+  code: zod.coerce.string(),
+});
+
+export const GetPlanetLocationResponse = zod.object({
+  location: zod.object({
+    code: zod.string(),
+    planet: zod.enum(["earth", "moon", "mars"]),
+    name: zod.string(),
+    nameKo: zod.string(),
+    flag: zod.string(),
+    latitude: zod.number(),
+    longitude: zod.number(),
+    description: zod.string(),
+    descriptionKo: zod.string(),
+  }),
+  signals: zod.array(
+    zod.object({
+      id: zod.string(),
+      countryCode: zod.string(),
+      countryFlag: zod.string(),
+      cityId: zod.string().nullish(),
+      planet: zod.enum(["earth", "moon", "mars"]),
+      category: zod.enum([
+        "news",
+        "conflict",
+        "disease",
+        "politics",
+        "economy",
+        "culture",
+        "ai_jobs",
+        "tech",
+        "natural_disaster",
+        "cyber",
+        "terror",
+        "climate",
+        "space",
+        "lunar_base",
+        "mars_habitat",
+      ]),
+      headline: zod.string(),
+      body: zod.string().nullish(),
+      sourceUrl: zod.string().nullish(),
+      publishedAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Heuristic predicted-news signals derived from recent issues
+ */
+export const ListForecastsQueryParams = zod.object({
+  planet: zod.enum(["earth", "moon", "mars"]).optional(),
+  countryCode: zod.coerce.string().optional(),
+  category: zod
+    .enum([
+      "news",
+      "conflict",
+      "disease",
+      "politics",
+      "economy",
+      "culture",
+      "ai_jobs",
+      "tech",
+      "natural_disaster",
+      "cyber",
+      "terror",
+      "climate",
+      "space",
+      "lunar_base",
+      "mars_habitat",
+    ])
+    .optional(),
+});
+
+export const listForecastsResponseConfidenceMin = 0;
+export const listForecastsResponseConfidenceMax = 100;
+
+export const ListForecastsResponseItem = zod.object({
+  id: zod.string(),
+  planet: zod.enum(["earth", "moon", "mars"]),
+  countryCode: zod.string(),
+  countryFlag: zod.string(),
+  category: zod.enum([
+    "news",
+    "conflict",
+    "disease",
+    "politics",
+    "economy",
+    "culture",
+    "ai_jobs",
+    "tech",
+    "natural_disaster",
+    "cyber",
+    "terror",
+    "climate",
+    "space",
+    "lunar_base",
+    "mars_habitat",
+  ]),
+  headlineKo: zod.string(),
+  headlineEn: zod.string(),
+  confidence: zod
+    .number()
+    .min(listForecastsResponseConfidenceMin)
+    .max(listForecastsResponseConfidenceMax),
+  horizon: zod.enum(["24h", "week", "month"]),
+  factors: zod.array(zod.string()),
+  evidence: zod.array(
+    zod.object({
+      id: zod.string(),
+      headline: zod.string(),
+      category: zod.enum([
+        "news",
+        "conflict",
+        "disease",
+        "politics",
+        "economy",
+        "culture",
+        "ai_jobs",
+        "tech",
+        "natural_disaster",
+        "cyber",
+        "terror",
+        "climate",
+        "space",
+        "lunar_base",
+        "mars_habitat",
+      ]),
+      publishedAt: zod.coerce.date(),
+    }),
+  ),
+});
+export const ListForecastsResponse = zod.array(ListForecastsResponseItem);
+
+/**
+ * @summary Track-record accuracy of past forecasts whose horizon has elapsed
+ */
+export const GetForecastAccuracyQueryParams = zod.object({
+  planet: zod.enum(["earth", "moon", "mars"]).optional(),
+});
+
+export const getForecastAccuracyResponseResolvedMin = 0;
+
+export const getForecastAccuracyResponseHitsMin = 0;
+
+export const getForecastAccuracyResponseMissesMin = 0;
+
+export const getForecastAccuracyResponseAccuracyMin = 0;
+export const getForecastAccuracyResponseAccuracyMax = 100;
+
+export const GetForecastAccuracyResponse = zod.object({
+  resolved: zod
+    .number()
+    .min(getForecastAccuracyResponseResolvedMin)
+    .describe("Forecasts whose horizon has elapsed and have been scored"),
+  hits: zod.number().min(getForecastAccuracyResponseHitsMin),
+  misses: zod.number().min(getForecastAccuracyResponseMissesMin),
+  accuracy: zod
+    .number()
+    .min(getForecastAccuracyResponseAccuracyMin)
+    .max(getForecastAccuracyResponseAccuracyMax)
+    .describe("Percent hit rate (0 if no resolved forecasts)"),
+  windowDays: zod
+    .number()
+    .min(1)
+    .describe("Look-back window for the recent track record"),
 });
 
 /**
@@ -559,6 +1008,10 @@ export const ConfirmStripeCheckoutResponse = zod.object({
 /**
  * @summary Top-level platform stats — total countries, issues, jobs analyzed, forum posts
  */
+export const GetDashboardStatsQueryParams = zod.object({
+  planet: zod.enum(["earth", "moon", "mars"]).optional(),
+});
+
 export const GetDashboardStatsResponse = zod.object({
   countriesTracked: zod.number(),
   issuesToday: zod.number(),

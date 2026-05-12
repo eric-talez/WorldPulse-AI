@@ -5,8 +5,10 @@
  * FutureMap AI API
  * OpenAPI spec version: 0.1.0
  */
+import type { Planet } from "./planet";
 
 export type ListRecentJobReportsParams = {
+  planet?: Planet;
   /**
    * @minimum 1
    * @maximum 50

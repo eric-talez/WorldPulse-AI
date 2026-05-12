@@ -61,12 +61,26 @@ export const IssueCategory = {
   cyber: "cyber",
   terror: "terror",
   climate: "climate",
+  space: "space",
+  lunar_base: "lunar_base",
+  mars_habitat: "mars_habitat",
+} as const;
+
+export type Planet = (typeof Planet)[keyof typeof Planet];
+
+export const Planet = {
+  earth: "earth",
+  moon: "moon",
+  mars: "mars",
 } as const;
 
 export interface Issue {
   id: string;
   countryCode: string;
   countryFlag: string;
+  /** @nullable */
+  cityId?: string | null;
+  planet: Planet;
   category: IssueCategory;
   headline: string;
   /** @nullable */
@@ -74,6 +88,22 @@ export interface Issue {
   /** @nullable */
   sourceUrl?: string | null;
   publishedAt: string;
+}
+
+export interface City {
+  id: string;
+  countryCode: string;
+  name: string;
+  nameKo: string;
+  latitude: number;
+  longitude: number;
+  /** @minimum 0 */
+  population?: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  importance: number;
 }
 
 export type CategoryCountCategory =
@@ -92,6 +122,9 @@ export const CategoryCountCategory = {
   cyber: "cyber",
   terror: "terror",
   climate: "climate",
+  space: "space",
+  lunar_base: "lunar_base",
+  mars_habitat: "mars_habitat",
 } as const;
 
 export interface CategoryCount {
@@ -100,11 +133,44 @@ export interface CategoryCount {
   count: number;
 }
 
+export interface PlanetLocation {
+  code: string;
+  planet: Planet;
+  name: string;
+  nameKo: string;
+  flag: string;
+  latitude: number;
+  longitude: number;
+  description: string;
+  descriptionKo: string;
+}
+
+export interface PlanetInfo {
+  planet: Planet;
+  label: string;
+  labelKo: string;
+  emoji: string;
+  ellipsoidRadius: number;
+  /** @nullable */
+  imageryUrl?: string | null;
+  baseColor: string;
+  tagline?: string;
+  taglineKo?: string;
+  locations: PlanetLocation[];
+  signalCategories: string[];
+}
+
+export interface PlanetLocationDetail {
+  location: PlanetLocation;
+  signals: Issue[];
+}
+
 export interface JobAnalyzeInput {
   /** @minLength 1 */
   jobName: string;
   /** @minLength 2 */
   countryCode: string;
+  planet?: Planet;
 }
 
 export interface JobReport {
@@ -112,6 +178,7 @@ export interface JobReport {
   jobName: string;
   countryCode: string;
   countryName: string;
+  planet: Planet;
   /**
    * @minimum 0
    * @maximum 100
@@ -151,6 +218,162 @@ export interface ForumPostInput {
   /** @minLength 1 */
   title: string;
   body?: string;
+}
+
+export interface ForumReply {
+  id: string;
+  postId: string;
+  /** @nullable */
+  parentReplyId?: string | null;
+  author: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface ForumReplyInput {
+  /** @minLength 1 */
+  author: string;
+  /** @minLength 1 */
+  body: string;
+  parentReplyId?: string;
+}
+
+export interface CountryBanner {
+  id: string;
+  countryCode: string;
+  title: string;
+  /** @nullable */
+  subtitle?: string | null;
+  imageUrl: string;
+  /** @nullable */
+  linkUrl?: string | null;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CountryBannerInput {
+  /** @minLength 2 */
+  countryCode: string;
+  /** @minLength 1 */
+  title: string;
+  subtitle?: string;
+  /** @minLength 1 */
+  imageUrl: string;
+  linkUrl?: string;
+  active?: boolean;
+}
+
+export interface CountryBannerUpdate {
+  /** @minLength 2 */
+  countryCode?: string;
+  /** @minLength 1 */
+  title?: string;
+  /** @nullable */
+  subtitle?: string | null;
+  /** @minLength 1 */
+  imageUrl?: string;
+  /** @nullable */
+  linkUrl?: string | null;
+  active?: boolean;
+}
+
+export type ForecastEvidenceCategory =
+  (typeof ForecastEvidenceCategory)[keyof typeof ForecastEvidenceCategory];
+
+export const ForecastEvidenceCategory = {
+  news: "news",
+  conflict: "conflict",
+  disease: "disease",
+  politics: "politics",
+  economy: "economy",
+  culture: "culture",
+  ai_jobs: "ai_jobs",
+  tech: "tech",
+  natural_disaster: "natural_disaster",
+  cyber: "cyber",
+  terror: "terror",
+  climate: "climate",
+  space: "space",
+  lunar_base: "lunar_base",
+  mars_habitat: "mars_habitat",
+} as const;
+
+export interface ForecastEvidence {
+  id: string;
+  headline: string;
+  category: ForecastEvidenceCategory;
+  publishedAt: string;
+}
+
+export type ForecastCategory =
+  (typeof ForecastCategory)[keyof typeof ForecastCategory];
+
+export const ForecastCategory = {
+  news: "news",
+  conflict: "conflict",
+  disease: "disease",
+  politics: "politics",
+  economy: "economy",
+  culture: "culture",
+  ai_jobs: "ai_jobs",
+  tech: "tech",
+  natural_disaster: "natural_disaster",
+  cyber: "cyber",
+  terror: "terror",
+  climate: "climate",
+  space: "space",
+  lunar_base: "lunar_base",
+  mars_habitat: "mars_habitat",
+} as const;
+
+export type ForecastHorizon =
+  (typeof ForecastHorizon)[keyof typeof ForecastHorizon];
+
+export const ForecastHorizon = {
+  "24h": "24h",
+  week: "week",
+  month: "month",
+} as const;
+
+export interface Forecast {
+  id: string;
+  planet: Planet;
+  countryCode: string;
+  countryFlag: string;
+  category: ForecastCategory;
+  headlineKo: string;
+  headlineEn: string;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  confidence: number;
+  horizon: ForecastHorizon;
+  factors: string[];
+  evidence: ForecastEvidence[];
+}
+
+export interface ForecastAccuracy {
+  /**
+   * Forecasts whose horizon has elapsed and have been scored
+   * @minimum 0
+   */
+  resolved: number;
+  /** @minimum 0 */
+  hits: number;
+  /** @minimum 0 */
+  misses: number;
+  /**
+   * Percent hit rate (0 if no resolved forecasts)
+   * @minimum 0
+   * @maximum 100
+   */
+  accuracy: number;
+  /**
+   * Look-back window for the recent track record
+   * @minimum 1
+   */
+  windowDays: number;
 }
 
 export interface AuthNonceInput {
@@ -328,6 +551,7 @@ export interface DashboardStats {
 }
 
 export type ListIssuesParams = {
+  planet?: Planet;
   category?: ListIssuesCategory;
   country?: string;
   /**
@@ -353,9 +577,17 @@ export const ListIssuesCategory = {
   cyber: "cyber",
   terror: "terror",
   climate: "climate",
+  space: "space",
+  lunar_base: "lunar_base",
+  mars_habitat: "mars_habitat",
 } as const;
 
+export type GetIssueSummaryParams = {
+  planet?: Planet;
+};
+
 export type ListRecentJobReportsParams = {
+  planet?: Planet;
   /**
    * @minimum 1
    * @maximum 50
@@ -365,4 +597,43 @@ export type ListRecentJobReportsParams = {
 
 export type ListForumPostsParams = {
   country?: string;
+};
+
+export type ListCountryBannersParams = {
+  country?: string;
+};
+
+export type ListForecastsParams = {
+  planet?: Planet;
+  countryCode?: string;
+  category?: ListForecastsCategory;
+};
+
+export type ListForecastsCategory =
+  (typeof ListForecastsCategory)[keyof typeof ListForecastsCategory];
+
+export const ListForecastsCategory = {
+  news: "news",
+  conflict: "conflict",
+  disease: "disease",
+  politics: "politics",
+  economy: "economy",
+  culture: "culture",
+  ai_jobs: "ai_jobs",
+  tech: "tech",
+  natural_disaster: "natural_disaster",
+  cyber: "cyber",
+  terror: "terror",
+  climate: "climate",
+  space: "space",
+  lunar_base: "lunar_base",
+  mars_habitat: "mars_habitat",
+} as const;
+
+export type GetForecastAccuracyParams = {
+  planet?: Planet;
+};
+
+export type GetDashboardStatsParams = {
+  planet?: Planet;
 };

@@ -21,7 +21,11 @@ import type {
   AuthNonceInput,
   AuthVerifyInput,
   CategoryCount,
+  City,
   Country,
+  CountryBanner,
+  CountryBannerInput,
+  CountryBannerUpdate,
   CountryDetail,
   CreateOrderInput,
   CreateOrderResponse,
@@ -31,17 +35,29 @@ import type {
   CurrentUserResponse,
   DashboardStats,
   ErrorResponse,
+  Forecast,
+  ForecastAccuracy,
   ForumPost,
   ForumPostInput,
+  ForumReply,
+  ForumReplyInput,
+  GetDashboardStatsParams,
+  GetForecastAccuracyParams,
+  GetIssueSummaryParams,
   HealthStatus,
   Issue,
   JobAnalyzeInput,
   JobReport,
+  ListCountryBannersParams,
+  ListForecastsParams,
   ListForumPostsParams,
   ListIssuesParams,
   ListRecentJobReportsParams,
   PaymentsConfig,
   PaypalWebhookEvent,
+  Planet,
+  PlanetInfo,
+  PlanetLocationDetail,
   StripeCheckoutInput,
   StripeCheckoutSession,
   WebhookAck,
@@ -294,7 +310,266 @@ export function useGetCountry<
 }
 
 /**
- * @summary Global signal stream of issues, filterable by category and country
+ * @summary List curated cities for a given country
+ */
+export const getListCountryCitiesUrl = (code: string) => {
+  return `/api/countries/${code}/cities`;
+};
+
+export const listCountryCities = async (
+  code: string,
+  options?: RequestInit,
+): Promise<City[]> => {
+  return customFetch<City[]>(getListCountryCitiesUrl(code), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListCountryCitiesQueryKey = (code: string) => {
+  return [`/api/countries/${code}/cities`] as const;
+};
+
+export const getListCountryCitiesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCountryCities>>,
+  TError = ErrorType<unknown>,
+>(
+  code: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listCountryCities>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCountryCitiesQueryKey(code);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listCountryCities>>
+  > = ({ signal }) => listCountryCities(code, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!code,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCountryCities>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListCountryCitiesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listCountryCities>>
+>;
+export type ListCountryCitiesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List curated cities for a given country
+ */
+
+export function useListCountryCities<
+  TData = Awaited<ReturnType<typeof listCountryCities>>,
+  TError = ErrorType<unknown>,
+>(
+  code: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listCountryCities>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListCountryCitiesQueryOptions(code, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Issues attached to a specific city
+ */
+export const getListCityIssuesUrl = (id: string) => {
+  return `/api/cities/${id}/issues`;
+};
+
+export const listCityIssues = async (
+  id: string,
+  options?: RequestInit,
+): Promise<Issue[]> => {
+  return customFetch<Issue[]>(getListCityIssuesUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListCityIssuesQueryKey = (id: string) => {
+  return [`/api/cities/${id}/issues`] as const;
+};
+
+export const getListCityIssuesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCityIssues>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listCityIssues>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListCityIssuesQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listCityIssues>>> = ({
+    signal,
+  }) => listCityIssues(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCityIssues>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListCityIssuesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listCityIssues>>
+>;
+export type ListCityIssuesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Issues attached to a specific city
+ */
+
+export function useListCityIssues<
+  TData = Awaited<ReturnType<typeof listCityIssues>>,
+  TError = ErrorType<unknown>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listCityIssues>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListCityIssuesQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Single issue / signal detail
+ */
+export const getGetIssueUrl = (id: string) => {
+  return `/api/issues/${id}`;
+};
+
+export const getIssue = async (
+  id: string,
+  options?: RequestInit,
+): Promise<Issue> => {
+  return customFetch<Issue>(getGetIssueUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetIssueQueryKey = (id: string) => {
+  return [`/api/issues/${id}`] as const;
+};
+
+export const getGetIssueQueryOptions = <
+  TData = Awaited<ReturnType<typeof getIssue>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getIssue>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetIssueQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getIssue>>> = ({
+    signal,
+  }) => getIssue(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getIssue>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetIssueQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getIssue>>
+>;
+export type GetIssueQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Single issue / signal detail
+ */
+
+export function useGetIssue<
+  TData = Awaited<ReturnType<typeof getIssue>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getIssue>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetIssueQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Global signal stream of issues, filterable by planet, category and country
  */
 export const getListIssuesUrl = (params?: ListIssuesParams) => {
   const normalizedParams = new URLSearchParams();
@@ -361,7 +636,7 @@ export type ListIssuesQueryResult = NonNullable<
 export type ListIssuesQueryError = ErrorType<unknown>;
 
 /**
- * @summary Global signal stream of issues, filterable by category and country
+ * @summary Global signal stream of issues, filterable by planet, category and country
  */
 
 export function useListIssues<
@@ -390,41 +665,57 @@ export function useListIssues<
 /**
  * @summary Counts of issues per category for the global signal stream
  */
-export const getGetIssueSummaryUrl = () => {
-  return `/api/issues/summary`;
+export const getGetIssueSummaryUrl = (params?: GetIssueSummaryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/issues/summary?${stringifiedParams}`
+    : `/api/issues/summary`;
 };
 
 export const getIssueSummary = async (
+  params?: GetIssueSummaryParams,
   options?: RequestInit,
 ): Promise<CategoryCount[]> => {
-  return customFetch<CategoryCount[]>(getGetIssueSummaryUrl(), {
+  return customFetch<CategoryCount[]>(getGetIssueSummaryUrl(params), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetIssueSummaryQueryKey = () => {
-  return [`/api/issues/summary`] as const;
+export const getGetIssueSummaryQueryKey = (params?: GetIssueSummaryParams) => {
+  return [`/api/issues/summary`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetIssueSummaryQueryOptions = <
   TData = Awaited<ReturnType<typeof getIssueSummary>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getIssueSummary>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: GetIssueSummaryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getIssueSummary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetIssueSummaryQueryKey();
+  const queryKey = queryOptions?.queryKey ?? getGetIssueSummaryQueryKey(params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof getIssueSummary>>> = ({
     signal,
-  }) => getIssueSummary({ signal, ...requestOptions });
+  }) => getIssueSummary(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getIssueSummary>>,
@@ -445,15 +736,18 @@ export type GetIssueSummaryQueryError = ErrorType<unknown>;
 export function useGetIssueSummary<
   TData = Awaited<ReturnType<typeof getIssueSummary>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getIssueSummary>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetIssueSummaryQueryOptions(options);
+>(
+  params?: GetIssueSummaryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getIssueSummary>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetIssueSummaryQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -827,6 +1121,976 @@ export const useCreateForumPost = <
 > => {
   return useMutation(getCreateForumPostMutationOptions(options));
 };
+
+/**
+ * @summary List replies for a forum post (flat list, ordered oldest first)
+ */
+export const getListForumRepliesUrl = (postId: string) => {
+  return `/api/forum/posts/${postId}/replies`;
+};
+
+export const listForumReplies = async (
+  postId: string,
+  options?: RequestInit,
+): Promise<ForumReply[]> => {
+  return customFetch<ForumReply[]>(getListForumRepliesUrl(postId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListForumRepliesQueryKey = (postId: string) => {
+  return [`/api/forum/posts/${postId}/replies`] as const;
+};
+
+export const getListForumRepliesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listForumReplies>>,
+  TError = ErrorType<unknown>,
+>(
+  postId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForumReplies>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListForumRepliesQueryKey(postId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listForumReplies>>
+  > = ({ signal }) => listForumReplies(postId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!postId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listForumReplies>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListForumRepliesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listForumReplies>>
+>;
+export type ListForumRepliesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List replies for a forum post (flat list, ordered oldest first)
+ */
+
+export function useListForumReplies<
+  TData = Awaited<ReturnType<typeof listForumReplies>>,
+  TError = ErrorType<unknown>,
+>(
+  postId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForumReplies>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListForumRepliesQueryOptions(postId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add a reply (or nested reply) to a forum post
+ */
+export const getCreateForumReplyUrl = (postId: string) => {
+  return `/api/forum/posts/${postId}/replies`;
+};
+
+export const createForumReply = async (
+  postId: string,
+  forumReplyInput: ForumReplyInput,
+  options?: RequestInit,
+): Promise<ForumReply> => {
+  return customFetch<ForumReply>(getCreateForumReplyUrl(postId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(forumReplyInput),
+  });
+};
+
+export const getCreateForumReplyMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createForumReply>>,
+    TError,
+    { postId: string; data: BodyType<ForumReplyInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createForumReply>>,
+  TError,
+  { postId: string; data: BodyType<ForumReplyInput> },
+  TContext
+> => {
+  const mutationKey = ["createForumReply"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createForumReply>>,
+    { postId: string; data: BodyType<ForumReplyInput> }
+  > = (props) => {
+    const { postId, data } = props ?? {};
+
+    return createForumReply(postId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateForumReplyMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createForumReply>>
+>;
+export type CreateForumReplyMutationBody = BodyType<ForumReplyInput>;
+export type CreateForumReplyMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Add a reply (or nested reply) to a forum post
+ */
+export const useCreateForumReply = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createForumReply>>,
+    TError,
+    { postId: string; data: BodyType<ForumReplyInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createForumReply>>,
+  TError,
+  { postId: string; data: BodyType<ForumReplyInput> },
+  TContext
+> => {
+  return useMutation(getCreateForumReplyMutationOptions(options));
+};
+
+/**
+ * @summary List active banners for a country (or all if no country given)
+ */
+export const getListCountryBannersUrl = (params?: ListCountryBannersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/forum/banners?${stringifiedParams}`
+    : `/api/forum/banners`;
+};
+
+export const listCountryBanners = async (
+  params?: ListCountryBannersParams,
+  options?: RequestInit,
+): Promise<CountryBanner[]> => {
+  return customFetch<CountryBanner[]>(getListCountryBannersUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListCountryBannersQueryKey = (
+  params?: ListCountryBannersParams,
+) => {
+  return [`/api/forum/banners`, ...(params ? [params] : [])] as const;
+};
+
+export const getListCountryBannersQueryOptions = <
+  TData = Awaited<ReturnType<typeof listCountryBanners>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListCountryBannersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listCountryBanners>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListCountryBannersQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listCountryBanners>>
+  > = ({ signal }) => listCountryBanners(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listCountryBanners>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListCountryBannersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listCountryBanners>>
+>;
+export type ListCountryBannersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List active banners for a country (or all if no country given)
+ */
+
+export function useListCountryBanners<
+  TData = Awaited<ReturnType<typeof listCountryBanners>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListCountryBannersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listCountryBanners>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListCountryBannersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Admin — list all country banners (active and inactive)
+ */
+export const getAdminListCountryBannersUrl = () => {
+  return `/api/admin/country-banners`;
+};
+
+export const adminListCountryBanners = async (
+  options?: RequestInit,
+): Promise<CountryBanner[]> => {
+  return customFetch<CountryBanner[]>(getAdminListCountryBannersUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminListCountryBannersQueryKey = () => {
+  return [`/api/admin/country-banners`] as const;
+};
+
+export const getAdminListCountryBannersQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminListCountryBanners>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminListCountryBanners>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminListCountryBannersQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminListCountryBanners>>
+  > = ({ signal }) => adminListCountryBanners({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminListCountryBanners>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminListCountryBannersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminListCountryBanners>>
+>;
+export type AdminListCountryBannersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Admin — list all country banners (active and inactive)
+ */
+
+export function useAdminListCountryBanners<
+  TData = Awaited<ReturnType<typeof adminListCountryBanners>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminListCountryBanners>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminListCountryBannersQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Admin — create a new country banner
+ */
+export const getAdminCreateCountryBannerUrl = () => {
+  return `/api/admin/country-banners`;
+};
+
+export const adminCreateCountryBanner = async (
+  countryBannerInput: CountryBannerInput,
+  options?: RequestInit,
+): Promise<CountryBanner> => {
+  return customFetch<CountryBanner>(getAdminCreateCountryBannerUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(countryBannerInput),
+  });
+};
+
+export const getAdminCreateCountryBannerMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminCreateCountryBanner>>,
+    TError,
+    { data: BodyType<CountryBannerInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminCreateCountryBanner>>,
+  TError,
+  { data: BodyType<CountryBannerInput> },
+  TContext
+> => {
+  const mutationKey = ["adminCreateCountryBanner"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminCreateCountryBanner>>,
+    { data: BodyType<CountryBannerInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminCreateCountryBanner(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminCreateCountryBannerMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminCreateCountryBanner>>
+>;
+export type AdminCreateCountryBannerMutationBody = BodyType<CountryBannerInput>;
+export type AdminCreateCountryBannerMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Admin — create a new country banner
+ */
+export const useAdminCreateCountryBanner = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminCreateCountryBanner>>,
+    TError,
+    { data: BodyType<CountryBannerInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminCreateCountryBanner>>,
+  TError,
+  { data: BodyType<CountryBannerInput> },
+  TContext
+> => {
+  return useMutation(getAdminCreateCountryBannerMutationOptions(options));
+};
+
+/**
+ * @summary Admin — update a country banner
+ */
+export const getAdminUpdateCountryBannerUrl = (id: string) => {
+  return `/api/admin/country-banners/${id}`;
+};
+
+export const adminUpdateCountryBanner = async (
+  id: string,
+  countryBannerUpdate: CountryBannerUpdate,
+  options?: RequestInit,
+): Promise<CountryBanner> => {
+  return customFetch<CountryBanner>(getAdminUpdateCountryBannerUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(countryBannerUpdate),
+  });
+};
+
+export const getAdminUpdateCountryBannerMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdateCountryBanner>>,
+    TError,
+    { id: string; data: BodyType<CountryBannerUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUpdateCountryBanner>>,
+  TError,
+  { id: string; data: BodyType<CountryBannerUpdate> },
+  TContext
+> => {
+  const mutationKey = ["adminUpdateCountryBanner"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUpdateCountryBanner>>,
+    { id: string; data: BodyType<CountryBannerUpdate> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return adminUpdateCountryBanner(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUpdateCountryBannerMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminUpdateCountryBanner>>
+>;
+export type AdminUpdateCountryBannerMutationBody =
+  BodyType<CountryBannerUpdate>;
+export type AdminUpdateCountryBannerMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Admin — update a country banner
+ */
+export const useAdminUpdateCountryBanner = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdateCountryBanner>>,
+    TError,
+    { id: string; data: BodyType<CountryBannerUpdate> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminUpdateCountryBanner>>,
+  TError,
+  { id: string; data: BodyType<CountryBannerUpdate> },
+  TContext
+> => {
+  return useMutation(getAdminUpdateCountryBannerMutationOptions(options));
+};
+
+/**
+ * @summary Admin — delete a country banner
+ */
+export const getAdminDeleteCountryBannerUrl = (id: string) => {
+  return `/api/admin/country-banners/${id}`;
+};
+
+export const adminDeleteCountryBanner = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getAdminDeleteCountryBannerUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getAdminDeleteCountryBannerMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDeleteCountryBanner>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminDeleteCountryBanner>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["adminDeleteCountryBanner"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminDeleteCountryBanner>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return adminDeleteCountryBanner(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminDeleteCountryBannerMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminDeleteCountryBanner>>
+>;
+
+export type AdminDeleteCountryBannerMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Admin — delete a country banner
+ */
+export const useAdminDeleteCountryBanner = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminDeleteCountryBanner>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminDeleteCountryBanner>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getAdminDeleteCountryBannerMutationOptions(options));
+};
+
+/**
+ * @summary Available planets with metadata, locations and signal categories
+ */
+export const getListPlanetsUrl = () => {
+  return `/api/planets`;
+};
+
+export const listPlanets = async (
+  options?: RequestInit,
+): Promise<PlanetInfo[]> => {
+  return customFetch<PlanetInfo[]>(getListPlanetsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListPlanetsQueryKey = () => {
+  return [`/api/planets`] as const;
+};
+
+export const getListPlanetsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listPlanets>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listPlanets>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListPlanetsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listPlanets>>> = ({
+    signal,
+  }) => listPlanets({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listPlanets>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListPlanetsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listPlanets>>
+>;
+export type ListPlanetsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Available planets with metadata, locations and signal categories
+ */
+
+export function useListPlanets<
+  TData = Awaited<ReturnType<typeof listPlanets>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listPlanets>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListPlanetsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Detail for a non-Earth planet location with related signals
+ */
+export const getGetPlanetLocationUrl = (planet: Planet, code: string) => {
+  return `/api/planets/${planet}/locations/${code}`;
+};
+
+export const getPlanetLocation = async (
+  planet: Planet,
+  code: string,
+  options?: RequestInit,
+): Promise<PlanetLocationDetail> => {
+  return customFetch<PlanetLocationDetail>(
+    getGetPlanetLocationUrl(planet, code),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetPlanetLocationQueryKey = (planet: Planet, code: string) => {
+  return [`/api/planets/${planet}/locations/${code}`] as const;
+};
+
+export const getGetPlanetLocationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPlanetLocation>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  planet: Planet,
+  code: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPlanetLocation>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPlanetLocationQueryKey(planet, code);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPlanetLocation>>
+  > = ({ signal }) =>
+    getPlanetLocation(planet, code, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(planet && code),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPlanetLocation>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPlanetLocationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPlanetLocation>>
+>;
+export type GetPlanetLocationQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Detail for a non-Earth planet location with related signals
+ */
+
+export function useGetPlanetLocation<
+  TData = Awaited<ReturnType<typeof getPlanetLocation>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  planet: Planet,
+  code: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getPlanetLocation>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPlanetLocationQueryOptions(planet, code, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Heuristic predicted-news signals derived from recent issues
+ */
+export const getListForecastsUrl = (params?: ListForecastsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/forecasts?${stringifiedParams}`
+    : `/api/forecasts`;
+};
+
+export const listForecasts = async (
+  params?: ListForecastsParams,
+  options?: RequestInit,
+): Promise<Forecast[]> => {
+  return customFetch<Forecast[]>(getListForecastsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListForecastsQueryKey = (params?: ListForecastsParams) => {
+  return [`/api/forecasts`, ...(params ? [params] : [])] as const;
+};
+
+export const getListForecastsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listForecasts>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListForecastsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForecasts>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListForecastsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listForecasts>>> = ({
+    signal,
+  }) => listForecasts(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listForecasts>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListForecastsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listForecasts>>
+>;
+export type ListForecastsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Heuristic predicted-news signals derived from recent issues
+ */
+
+export function useListForecasts<
+  TData = Awaited<ReturnType<typeof listForecasts>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListForecastsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listForecasts>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListForecastsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Track-record accuracy of past forecasts whose horizon has elapsed
+ */
+export const getGetForecastAccuracyUrl = (
+  params?: GetForecastAccuracyParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/forecasts/accuracy?${stringifiedParams}`
+    : `/api/forecasts/accuracy`;
+};
+
+export const getForecastAccuracy = async (
+  params?: GetForecastAccuracyParams,
+  options?: RequestInit,
+): Promise<ForecastAccuracy> => {
+  return customFetch<ForecastAccuracy>(getGetForecastAccuracyUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetForecastAccuracyQueryKey = (
+  params?: GetForecastAccuracyParams,
+) => {
+  return [`/api/forecasts/accuracy`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetForecastAccuracyQueryOptions = <
+  TData = Awaited<ReturnType<typeof getForecastAccuracy>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetForecastAccuracyParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getForecastAccuracy>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetForecastAccuracyQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getForecastAccuracy>>
+  > = ({ signal }) =>
+    getForecastAccuracy(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getForecastAccuracy>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetForecastAccuracyQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getForecastAccuracy>>
+>;
+export type GetForecastAccuracyQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Track-record accuracy of past forecasts whose horizon has elapsed
+ */
+
+export function useGetForecastAccuracy<
+  TData = Awaited<ReturnType<typeof getForecastAccuracy>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetForecastAccuracyParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getForecastAccuracy>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetForecastAccuracyQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Issue a nonce for SIWE wallet sign-in
@@ -1922,41 +3186,60 @@ export const useConfirmStripeCheckout = <
 /**
  * @summary Top-level platform stats — total countries, issues, jobs analyzed, forum posts
  */
-export const getGetDashboardStatsUrl = () => {
-  return `/api/dashboard/stats`;
+export const getGetDashboardStatsUrl = (params?: GetDashboardStatsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/dashboard/stats?${stringifiedParams}`
+    : `/api/dashboard/stats`;
 };
 
 export const getDashboardStats = async (
+  params?: GetDashboardStatsParams,
   options?: RequestInit,
 ): Promise<DashboardStats> => {
-  return customFetch<DashboardStats>(getGetDashboardStatsUrl(), {
+  return customFetch<DashboardStats>(getGetDashboardStatsUrl(params), {
     ...options,
     method: "GET",
   });
 };
 
-export const getGetDashboardStatsQueryKey = () => {
-  return [`/api/dashboard/stats`] as const;
+export const getGetDashboardStatsQueryKey = (
+  params?: GetDashboardStatsParams,
+) => {
+  return [`/api/dashboard/stats`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetDashboardStatsQueryOptions = <
   TData = Awaited<ReturnType<typeof getDashboardStats>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getDashboardStats>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  params?: GetDashboardStatsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getDashboardStats>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getGetDashboardStatsQueryKey();
+  const queryKey =
+    queryOptions?.queryKey ?? getGetDashboardStatsQueryKey(params);
 
   const queryFn: QueryFunction<
     Awaited<ReturnType<typeof getDashboardStats>>
-  > = ({ signal }) => getDashboardStats({ signal, ...requestOptions });
+  > = ({ signal }) => getDashboardStats(params, { signal, ...requestOptions });
 
   return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
     Awaited<ReturnType<typeof getDashboardStats>>,
@@ -1977,15 +3260,18 @@ export type GetDashboardStatsQueryError = ErrorType<unknown>;
 export function useGetDashboardStats<
   TData = Awaited<ReturnType<typeof getDashboardStats>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getDashboardStats>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetDashboardStatsQueryOptions(options);
+>(
+  params?: GetDashboardStatsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getDashboardStats>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetDashboardStatsQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

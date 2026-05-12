@@ -203,6 +203,243 @@ function classify(jobName: string): keyof typeof PROFILES {
   return "default";
 }
 
+const SPACE_PROFILES: Record<string, JobProfile> = {
+  space_construction: {
+    automationRisk: 35,
+    growthScore: 92,
+    summary:
+      "달·화성 표면에 거주 모듈과 인프라를 짓는 우주 건설 직군. 로봇 협업이 표준이지만, 현장 판단과 EVA 작업은 사람의 영역입니다.",
+    automatedTasks: [
+      "레골리스 굴착·운반 자동화",
+      "3D 프린팅 거주 모듈 출력",
+      "구조물 결함 자동 스캔",
+      "공정 일정 최적화",
+    ],
+    humanStrengths: [
+      "EVA(선외 활동) 현장 판단",
+      "비정형 환경에서의 트러블슈팅",
+      "다국적 우주 인력 리더십",
+      "안전·생명 직결 의사결정",
+    ],
+    futureChanges: [
+      "지구 원격 조종 + 현장 감독 하이브리드 표준화",
+      "달 남극 기지 건설로 단계적 수요 폭증",
+      "로봇 오케스트레이션 능력이 핵심 차별화",
+      "건설 자격이 우주 자격 인증과 통합",
+    ],
+    recommendedSkills: [
+      "로봇 원격조종(텔레오퍼레이션)",
+      "우주 인증 안전 표준",
+      "재료·구조 공학",
+      "다국적 팀 협업",
+    ],
+  },
+  space_geology: {
+    automationRisk: 28,
+    growthScore: 88,
+    summary:
+      "달·화성·소행성 자원과 지질 구조를 분석하는 행성 지질학자. AI는 데이터 처리를 가속하지만 가설 설계는 사람의 몫입니다.",
+    automatedTasks: [
+      "위성·로버 이미지 자동 분류",
+      "분광 데이터 1차 분석",
+      "광물 매핑 초안 생성",
+      "지층 모델링 시뮬레이션",
+    ],
+    humanStrengths: [
+      "새로운 지질 가설 수립",
+      "현장 시료 채집 우선순위 판단",
+      "다학제 연구 리딩",
+      "정책·산업 의사결정 자문",
+    ],
+    futureChanges: [
+      "민간 자원 탐사 기업 채용 가속",
+      "AI 지질 모델 운용 능력이 필수",
+      "소행성 채굴 산업의 신규 직무 생성",
+      "지구 지질학자에서 행성 지질학자로 전환 트렌드",
+    ],
+    recommendedSkills: [
+      "행성 지질·천체화학",
+      "원격 탐사·분광 분석",
+      "Python·머신러닝",
+      "필드 샘플링 방법론",
+    ],
+  },
+  space_robotics: {
+    automationRisk: 30,
+    growthScore: 95,
+    summary:
+      "지구에서 달·화성의 로봇을 조종하는 원격 로봇 오퍼레이터. 신생 직군 중 가장 빠르게 성장 중입니다.",
+    automatedTasks: [
+      "정형 경로 자율 주행",
+      "로봇 상태 모니터링",
+      "정형 작업 매크로 실행",
+      "센서 데이터 자동 보정",
+    ],
+    humanStrengths: [
+      "통신 지연 환경에서의 의사결정",
+      "예외 상황 즉응 조작",
+      "복합 미션 우선순위 판단",
+      "안전 정지 책임",
+    ],
+    futureChanges: [
+      "교대제 24시간 관제 센터 보편화",
+      "UI/UX 향상으로 진입장벽 점진적 하락",
+      "AAA 게이머 출신 채용 사례 증가",
+      "달·화성 동시 다중 로봇 조작 표준",
+    ],
+    recommendedSkills: [
+      "텔레오퍼레이션 인터페이스",
+      "지연 통신 환경 적응",
+      "기계공학·제어 기초",
+      "위기관리·집중력",
+    ],
+  },
+  space_agriculture: {
+    automationRisk: 40,
+    growthScore: 86,
+    summary:
+      "폐쇄 생태계에서 작물을 키우는 우주 농업 전문가. 자원 순환과 영양 설계가 핵심입니다.",
+    automatedTasks: [
+      "조명·온도·관수 자동 제어",
+      "작물 성장 영상 분석",
+      "영양액 농도 자동 조정",
+      "수확 로봇 운용",
+    ],
+    humanStrengths: [
+      "신규 작물 적응 실험 설계",
+      "폐쇄 생태계 균형 판단",
+      "위기 상황 대체 메뉴 설계",
+      "승무원 식문화 케어",
+    ],
+    futureChanges: [
+      "달 기지 식량 자급 프로젝트 본격화",
+      "수직 농장 기술 이식 가속",
+      "영양·심리학·식문화 융합 직군화",
+      "지구 식량 위기 대응 기술로 역수출",
+    ],
+    recommendedSkills: [
+      "수경·기경 재배",
+      "폐쇄 생태계 관리",
+      "식품과학·영양학",
+      "환경 제어 시스템",
+    ],
+  },
+  space_default: {
+    automationRisk: 38,
+    growthScore: 85,
+    summary:
+      "우주 산업은 신생 직군이 빠르게 출현하는 영역입니다. 기존 전문성 + 우주 환경 적응 능력이 결합된 인재가 가장 가치가 큽니다.",
+    automatedTasks: [
+      "정형화된 텔레메트리 분석",
+      "보고서 자동 작성",
+      "장비 점검 스케줄링",
+      "단순 시뮬레이션 수행",
+    ],
+    humanStrengths: [
+      "위험 환경에서의 판단",
+      "다국적·다학제 협업",
+      "장기 미션 심리 회복력",
+      "윤리·안전 책임",
+    ],
+    futureChanges: [
+      "민간 우주 시장 폭발적 성장",
+      "지구 분야 전문가의 우주 직군 전환",
+      "원격 + 현장 하이브리드 근무가 표준",
+      "우주 자격 인증 체계 통합",
+    ],
+    recommendedSkills: [
+      "우주 환경 인증",
+      "원격 협업·의사소통",
+      "AI 도구 활용",
+      "위기관리·체력",
+    ],
+  },
+};
+
+function classifySpace(jobName: string): keyof typeof SPACE_PROFILES {
+  const j = jobName.toLowerCase();
+  if (/건설|construction|builder|architect|건축/.test(j))
+    return "space_construction";
+  if (/지질|geolog|광물|mining|채굴|prospect/.test(j)) return "space_geology";
+  if (/로봇|robot|drone|텔레오|teleop|operator|조종/.test(j))
+    return "space_robotics";
+  if (/농업|agric|farm|식물|botan|hydropon/.test(j)) return "space_agriculture";
+  return "space_default";
+}
+
+const PLANET_LOCATION_CONTEXT_KO: Record<string, string[]> = {
+  "MOON-APOLLO11": [
+    "역사 유산 보존 미션 — 보존·관광 직무 유망",
+    "헤리티지 다큐멘터리·VR 콘텐츠 제작 협업 기회",
+    "유엔 달 협약 관련 정책·법률 자문 수요",
+  ],
+  "MOON-ARTEMIS": [
+    "NASA 아르테미스 협력국 인력 채용 활성화",
+    "남극 기지 건설·운영 신규 일자리 폭증",
+    "장기 거주 헬스케어·심리 케어 신직군",
+  ],
+  "MOON-SHACKLETON": [
+    "물·얼음 채굴 라이선스 획득 기업의 인력 수요",
+    "ISRU(현지 자원 활용) 엔지니어 단가 상위권",
+    "환경 영향 평가 컨설팅 기회",
+  ],
+  "MOON-MAREIMBRIUM": [
+    "월면 3D 프린팅 자재 R&D 인력 수요",
+    "건설 로봇 원격 조종 24시간 관제 채용",
+    "토목·재료공학 우주 적용 컨설팅",
+  ],
+  "MARS-JEZERO": [
+    "샘플 리턴 미션 협력 연구원 채용",
+    "우주생물학·천체화학 박사 트랙 확대",
+    "ESA·NASA 공동 연구 비자 패스트트랙",
+  ],
+  "MARS-GALE": [
+    "장기 로버 운영 데이터 분석 직무 안정 수요",
+    "기후 모델링·메탄 미스터리 연구 펀딩 증가",
+    "민간 기업 컨설팅으로 부수입 가능",
+  ],
+  "MARS-OLYMPUS": [
+    "지열·자원 탐사 장기 프로젝트 핵심 인력",
+    "민간 자원 채굴 기업의 1선 채용 대상",
+    "행성 지질학자 글로벌 수요 4배",
+  ],
+  "MARS-COLONY-A": [
+    "스타십 화성 콜로니 1호 시나리오 핵심 인력",
+    "장기 거주 식량·의료·심리 케어 직무 신설",
+    "지구 분야 전문가의 화성 직군 전환 사례 다수",
+  ],
+};
+
+export function analyzeSpaceJob(
+  jobName: string,
+  locationCode: string,
+  locationNameKo: string,
+): {
+  automationRisk: number;
+  growthScore: number;
+  summary: string;
+  automatedTasks: string[];
+  humanStrengths: string[];
+  futureChanges: string[];
+  recommendedSkills: string[];
+  countryOpportunities: string[];
+} {
+  const key = classifySpace(jobName);
+  const profile = SPACE_PROFILES[key]!;
+  const opportunities =
+    PLANET_LOCATION_CONTEXT_KO[locationCode.toUpperCase()] ?? [
+      "신생 우주 직군으로 조기 진입 시 선점 효과",
+      "지구 분야 전문성 + 우주 적용으로 차별화 가능",
+      "민간·정부 합동 프로젝트 채용 활발",
+    ];
+  return {
+    ...profile,
+    countryOpportunities: opportunities.map(
+      (line) => `${locationNameKo}: ${line}`,
+    ),
+  };
+}
+
 const COUNTRY_CONTEXT: Record<string, string[]> = {
   KR: [
     "정부 디지털 뉴딜로 AI 전환 인력 수요 급증",

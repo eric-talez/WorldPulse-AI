@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Search, Globe, FileText, MessageSquare, CreditCard, ChevronRight, Activity, AlertTriangle, TrendingUp, Cpu, ShieldAlert, Zap, BookOpen } from "lucide-react";
+import { Search, Globe, FileText, MessageSquare, CreditCard, ChevronRight, ChevronLeft, Activity, AlertTriangle, TrendingUp, Cpu, ShieldAlert, Zap, BookOpen } from "lucide-react";
 
 declare global {
   interface Window {
@@ -37,6 +37,9 @@ const jobsGrowth = [
 export default function FutureMap() {
   const cesiumContainer = useRef<HTMLDivElement>(null);
   const [globeReady, setGlobeReady] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [leftPanelOpen, setLeftPanelOpen] = useState(true);
 
   useEffect(() => {
     // Suppress runtime-error overlays from any cesium/WebGL async errors.
@@ -241,7 +244,7 @@ export default function FutureMap() {
       {/* Main Map + Stream Area */}
       <div className="pt-[73px] flex flex-col lg:flex-row h-screen">
         {/* Cesium Globe */}
-        <div className="w-full lg:w-[65%] h-[50vh] lg:h-full relative border-r border-slate-800/50">
+        <div className="w-full flex-1 h-[50vh] lg:h-full relative border-r border-slate-800/50">
           <div ref={cesiumContainer} className="w-full h-full bg-[#020617]" />
           
           {/* Overlay HUD */}
@@ -254,11 +257,81 @@ export default function FutureMap() {
               </div>
             </div>
           </div>
+
+          {/* Left Country Detail overlay - collapsed rail (desktop only) */}
+          {leftPanelOpen && leftCollapsed && (
+            <button
+              onClick={() => setLeftCollapsed(false)}
+              aria-label="펼치기"
+              title="펼치기 / Expand"
+              className="hidden lg:flex absolute top-24 left-6 bottom-24 w-10 bg-[#020617]/90 backdrop-blur border border-slate-800/80 rounded-xl flex-col items-center justify-start py-3 gap-3 hover:border-cyan-500/50 transition-colors z-20"
+            >
+              <span className="text-2xl leading-none">🇰🇷</span>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </button>
+          )}
+
+          {/* Left Country Detail overlay panel */}
+          {leftPanelOpen && (
+            <div className={`hidden lg:flex absolute top-24 left-6 bottom-24 w-72 bg-[#020617]/90 backdrop-blur-xl border border-slate-800/80 rounded-xl transition-all duration-500 transform z-20 flex-col overflow-hidden ${leftCollapsed ? '-translate-x-[110%] opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}`}>
+              <div className="p-4 border-b border-slate-800/80 flex justify-between items-start bg-slate-900/40">
+                <div>
+                  <div className="text-3xl mb-1">🇰🇷</div>
+                  <h3 className="text-lg font-bold text-white">Republic of Korea</h3>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setLeftCollapsed(true)}
+                    aria-label="접기"
+                    title="접기 / Collapse"
+                    className="p-1 hover:bg-white/10 rounded-full transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-slate-400" />
+                  </button>
+                  <button
+                    onClick={() => setLeftPanelOpen(false)}
+                    aria-label="닫기"
+                    title="닫기 / Close"
+                    className="p-1 hover:bg-white/10 rounded-full transition-colors text-slate-400 text-lg leading-none px-2"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 text-sm text-slate-400">
+                <p>국가 종합 위험도: <span className="text-amber-400 font-mono font-bold">64/100</span></p>
+                <p className="mt-3 text-xs leading-relaxed">선택한 국가의 자동화 위험도, 고성장 직업군 등 주요 지표를 한 눈에 확인합니다.</p>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Global Signal Stream */}
-        <div className="w-full lg:w-[35%] h-[50vh] lg:h-full flex flex-col bg-[#020617]">
-          <div className="p-4 border-b border-slate-800/50">
+        {/* Global Signal Stream (animated width on desktop = smooth slide) */}
+        <aside className={`relative bg-[#020617] border-l border-slate-800/50 overflow-hidden flex flex-col w-full h-[50vh] lg:h-full lg:transition-[width] lg:duration-500 lg:ease-in-out ${rightCollapsed ? 'lg:w-10' : 'lg:w-[35%] lg:min-w-[340px]'}`}>
+          {/* Collapsed rail (desktop only) */}
+          <button
+            onClick={() => setRightCollapsed(false)}
+            aria-label="펼치기"
+            title="펼치기 / Expand"
+            className={`hidden lg:flex absolute inset-y-0 left-0 w-10 flex-col items-center justify-start py-4 gap-3 hover:bg-slate-900 transition-opacity duration-300 z-10 ${rightCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          >
+            <ChevronLeft className="w-4 h-4 text-slate-400" />
+            <Activity className="w-5 h-5 text-cyan-500" />
+          </button>
+
+          {/* Inner-edge collapse toggle */}
+          <button
+            onClick={() => setRightCollapsed(true)}
+            aria-label="접기"
+            title="접기 / Collapse"
+            className={`hidden lg:inline-flex absolute top-4 left-3 p-1 hover:bg-white/10 rounded-full transition-opacity duration-300 z-10 ${rightCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+          >
+            <ChevronRight className="w-4 h-4 text-slate-400" />
+          </button>
+
+          {/* Full content - holds intrinsic width to avoid layout reflow during animation */}
+          <div className={`flex flex-col w-full lg:w-[340px] lg:min-w-[340px] h-full lg:transition-opacity lg:duration-300 ${rightCollapsed ? 'lg:opacity-0 lg:pointer-events-none' : 'opacity-100'}`}>
+          <div className="p-4 lg:pl-12 border-b border-slate-800/50">
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Activity className="w-5 h-5 text-cyan-500" />
               Global Signal Stream
@@ -292,7 +365,8 @@ export default function FutureMap() {
               </div>
             ))}
           </div>
-        </div>
+          </div>
+        </aside>
       </div>
 
       {/* Country Detail & AI Job Future Panel */}

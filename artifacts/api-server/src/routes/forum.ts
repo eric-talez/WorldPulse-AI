@@ -1,10 +1,12 @@
 import { Router, type IRouter } from "express";
-import { desc, eq } from "drizzle-orm";
-import { db, forumPostsTable } from "@workspace/db";
+import { asc, desc, eq, sql } from "drizzle-orm";
+import { db, forumPostsTable, forumRepliesTable } from "@workspace/db";
 import {
   ListForumPostsQueryParams,
   ListForumPostsResponse,
   CreateForumPostBody,
+  ListForumRepliesResponse,
+  CreateForumReplyBody,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -43,6 +45,40 @@ router.post("/forum/posts", async (req, res): Promise<void> => {
     })
     .returning();
   res.status(201).json(post);
+});
+
+router.get("/forum/posts/:postId/replies", async (req, res): Promise<void> => {
+  const { postId } = req.params;
+  const rows = await db
+    .select()
+    .from(forumRepliesTable)
+    .where(eq(forumRepliesTable.postId, postId))
+    .orderBy(asc(forumRepliesTable.createdAt));
+  res.json(ListForumRepliesResponse.parse(rows));
+});
+
+router.post("/forum/posts/:postId/replies", async (req, res): Promise<void> => {
+  const { postId } = req.params;
+  const parsed = CreateForumReplyBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const { author, body, parentReplyId } = parsed.data;
+  const [reply] = await db
+    .insert(forumRepliesTable)
+    .values({
+      postId,
+      author,
+      body,
+      parentReplyId: parentReplyId ?? null,
+    })
+    .returning();
+  await db
+    .update(forumPostsTable)
+    .set({ replyCount: sql`${forumPostsTable.replyCount} + 1` })
+    .where(eq(forumPostsTable.id, postId));
+  res.status(201).json(reply);
 });
 
 export default router;
