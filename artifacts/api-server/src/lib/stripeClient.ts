@@ -9,6 +9,14 @@ interface ConnectionSettings {
 }
 
 async function getCredentials(): Promise<{ publishableKey: string; secretKey: string }> {
+  const secretKey = process.env["STRIPE_SECRET_KEY"];
+  if (secretKey) {
+    return {
+      publishableKey: process.env["STRIPE_PUBLISHABLE_KEY"] ?? "",
+      secretKey,
+    };
+  }
+
   const hostname = process.env["REPLIT_CONNECTORS_HOSTNAME"];
   const xReplitToken = process.env["REPL_IDENTITY"]
     ? "repl " + process.env["REPL_IDENTITY"]
