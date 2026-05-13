@@ -366,7 +366,7 @@ function PostReplies({
           queryClient.invalidateQueries({
             queryKey: getListForumRepliesQueryKey(postId),
           });
-          queryClient.invalidateQueries({ queryKey: ["/forum/posts"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/forum/posts"] });
         },
       },
     );
