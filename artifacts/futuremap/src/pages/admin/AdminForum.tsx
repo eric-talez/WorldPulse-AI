@@ -4,10 +4,10 @@ import {
   useAdminGetForumPost,
   useAdminDeleteForumPost,
   useAdminDeleteForumReply,
-  useListCountries,
   getAdminListForumPostsQueryKey,
   getAdminGetForumPostQueryKey,
 } from "@workspace/api-client-react";
+import { useLocationOptions } from "@/lib/locations";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/lib/language";
 import AdminLayout from "./AdminLayout";
@@ -21,7 +21,7 @@ import { format } from "date-fns";
 export default function AdminForum() {
   const { t, language } = useLanguage();
   const qc = useQueryClient();
-  const { data: countries } = useListCountries();
+  const { all: locations, byCode } = useLocationOptions();
   const [country, setCountry] = useState<string>("");
   const [author, setAuthor] = useState("");
   const [from, setFrom] = useState("");
@@ -69,7 +69,7 @@ export default function AdminForum() {
   };
 
   const countryName = (code: string) => {
-    const c = countries?.find((x) => x.code === code);
+    const c = byCode.get(code.toUpperCase());
     if (!c) return code;
     return `${c.flag} ${language === "ko" ? c.nameKo : c.name}`;
   };
@@ -101,9 +101,12 @@ export default function AdminForum() {
                 className="w-full bg-background/50 border border-border rounded-md h-9 px-3 text-sm"
               >
                 <option value="">{t("전체", "All")}</option>
-                {countries?.map((c) => (
+                {locations.map((c) => (
                   <option key={c.code} value={c.code}>
                     {c.flag} {language === "ko" ? c.nameKo : c.name}
+                    {c.planet !== "earth"
+                      ? ` · ${language === "ko" ? c.groupLabelKo : c.groupLabel}`
+                      : ""}
                   </option>
                 ))}
               </select>

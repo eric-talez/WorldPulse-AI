@@ -6,9 +6,9 @@ import {
   useAdminUpdateCountryBanner,
   useAdminDeleteCountryBanner,
   getAdminListCountryBannersQueryKey,
-  useListCountries,
   type CountryBanner,
 } from "@workspace/api-client-react";
+import { useLocationOptions } from "@/lib/locations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,7 +20,7 @@ export default function Admin() {
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
   const { data: banners } = useAdminListCountryBanners();
-  const { data: countries } = useListCountries();
+  const { all: locations, byCode } = useLocationOptions();
   const createBanner = useAdminCreateCountryBanner();
   const updateBanner = useAdminUpdateCountryBanner();
   const deleteBanner = useAdminDeleteCountryBanner();
@@ -109,7 +109,7 @@ export default function Admin() {
             </div>
           ) : (
             Object.entries(grouped).map(([code, list]) => {
-              const country = countries?.find((c) => c.code === code);
+              const country = byCode.get(code.toUpperCase());
               return (
                 <div key={code}>
                   <div className="flex items-center gap-2 mb-3 text-sm font-semibold">
@@ -220,9 +220,12 @@ export default function Admin() {
                     <option value="">
                       {t("국가 선택...", "Select country...")}
                     </option>
-                    {countries?.map((c) => (
+                    {locations.map((c) => (
                       <option key={c.code} value={c.code}>
                         {c.flag} {language === "ko" ? c.nameKo : c.name}
+                        {c.planet !== "earth"
+                          ? ` · ${language === "ko" ? c.groupLabelKo : c.groupLabel}`
+                          : ""}
                       </option>
                     ))}
                   </select>

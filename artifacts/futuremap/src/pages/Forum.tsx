@@ -4,12 +4,12 @@ import {
   useListForumPosts,
   useCreateForumPost,
   getListForumPostsQueryKey,
-  useListCountries,
   useListForumReplies,
   useCreateForumReply,
   getListForumRepliesQueryKey,
   useListCountryBanners,
 } from "@workspace/api-client-react";
+import { useLocationOptions } from "@/lib/locations";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +35,7 @@ export default function Forum() {
   const queryClient = useQueryClient();
 
   const { data: posts, isLoading } = useListForumPosts({ country: selectedCountry });
-  const { data: countries } = useListCountries();
+  const { earthCountries, spaceLocations, byCode } = useLocationOptions();
   const createPost = useCreateForumPost();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -74,7 +74,7 @@ export default function Forum() {
         >
           🌐 {t("글로벌", "Global")}
         </button>
-        {countries?.slice(0, 10).map(country => (
+        {earthCountries.slice(0, 10).map(country => (
           <button
             key={country.code}
             onClick={() => setSelectedCountry(country.code)}
@@ -84,6 +84,22 @@ export default function Forum() {
           >
             <span>{country.flag}</span>
             {language === 'ko' ? country.nameKo : country.name}
+          </button>
+        ))}
+        {spaceLocations.length > 0 && (
+          <div className="w-px self-stretch bg-border mx-1" aria-hidden />
+        )}
+        {spaceLocations.map(loc => (
+          <button
+            key={loc.code}
+            onClick={() => setSelectedCountry(loc.code)}
+            title={language === 'ko' ? loc.groupLabelKo : loc.groupLabel}
+            className={`px-4 py-2 whitespace-nowrap text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${
+              selectedCountry === loc.code ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <span>{loc.flag}</span>
+            {language === 'ko' ? loc.nameKo : loc.name}
           </button>
         ))}
       </div>
@@ -184,7 +200,7 @@ export default function Forum() {
           {selectedPostId && (() => {
             const post = posts?.find((p) => p.id === selectedPostId);
             if (!post) return null;
-            const country = countries?.find((c) => c.code === post.countryCode);
+            const country = byCode.get(post.countryCode.toUpperCase());
             return (
               <>
                 <DialogHeader>
