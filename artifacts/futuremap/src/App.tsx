@@ -7,7 +7,12 @@ import Home from "@/pages/Home";
 import JobReport from "@/pages/JobReport";
 import Forum from "@/pages/Forum";
 import About from "@/pages/About";
-import Admin from "@/pages/Admin";
+import AdminLogin from "@/pages/admin/AdminLogin";
+import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminUserDetail from "@/pages/admin/AdminUserDetail";
+import AdminForum from "@/pages/admin/AdminForum";
+import AdminBanners from "@/pages/admin/AdminBanners";
 import Layout from "@/components/layout/Layout";
 import { LanguageProvider } from "@/lib/language";
 import { AuthProvider } from "@/lib/auth";
@@ -22,7 +27,12 @@ function Router() {
         <Route path="/job" component={JobReport} />
         <Route path="/forum" component={Forum} />
         <Route path="/about" component={About} />
-        <Route path="/admin" component={Admin} />
+        <Route path="/admin/login" component={AdminLogin} />
+        <Route path="/admin/users/:wallet" component={AdminUserDetail} />
+        <Route path="/admin/users" component={AdminUsers} />
+        <Route path="/admin/forum" component={AdminForum} />
+        <Route path="/admin/banners" component={AdminBanners} />
+        <Route path="/admin" component={AdminDashboard} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

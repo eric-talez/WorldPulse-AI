@@ -1006,6 +1006,280 @@ export const ConfirmStripeCheckoutResponse = zod.object({
 });
 
 /**
+ * @summary Log in as admin with email + password
+ */
+
+export const AdminLoginBody = zod.object({
+  email: zod.string().min(1),
+  password: zod.string().min(1),
+});
+
+export const AdminLoginResponse = zod.object({
+  authenticated: zod.boolean(),
+  email: zod.string(),
+});
+
+/**
+ * @summary Return current admin session (or null)
+ */
+export const AdminMeResponse = zod.object({
+  authenticated: zod.boolean(),
+  email: zod.union([zod.string(), zod.null()]).optional(),
+});
+
+/**
+ * @summary User signups, deactivations and a daily time series
+ */
+export const adminUserStatsResponseTotalUsersMin = 0;
+
+export const adminUserStatsResponseDeactivatedUsersMin = 0;
+
+export const adminUserStatsResponseNewTodayMin = 0;
+
+export const adminUserStatsResponseNewThisWeekMin = 0;
+
+export const adminUserStatsResponseNewThisMonthMin = 0;
+
+export const adminUserStatsResponseDailyItemSignupsMin = 0;
+
+export const adminUserStatsResponseDailyItemDeactivationsMin = 0;
+
+export const AdminUserStatsResponse = zod.object({
+  totalUsers: zod.number().min(adminUserStatsResponseTotalUsersMin),
+  deactivatedUsers: zod.number().min(adminUserStatsResponseDeactivatedUsersMin),
+  newToday: zod.number().min(adminUserStatsResponseNewTodayMin),
+  newThisWeek: zod.number().min(adminUserStatsResponseNewThisWeekMin),
+  newThisMonth: zod.number().min(adminUserStatsResponseNewThisMonthMin),
+  daily: zod.array(
+    zod.object({
+      date: zod.string().describe("YYYY-MM-DD"),
+      signups: zod.number().min(adminUserStatsResponseDailyItemSignupsMin),
+      deactivations: zod
+        .number()
+        .min(adminUserStatsResponseDailyItemDeactivationsMin),
+    }),
+  ),
+});
+
+/**
+ * @summary Forum totals, per-country ranking and hot posts
+ */
+export const adminForumStatsResponseTotalPostsMin = 0;
+
+export const adminForumStatsResponseTotalCommentsMin = 0;
+
+export const adminForumStatsResponsePerCountryItemCountMin = 0;
+
+export const adminForumStatsResponseHotItemReplyCountMin = 0;
+
+export const adminForumStatsResponseHotItemRecentActivityMin = 0;
+
+export const AdminForumStatsResponse = zod.object({
+  totalPosts: zod.number().min(adminForumStatsResponseTotalPostsMin),
+  totalComments: zod.number().min(adminForumStatsResponseTotalCommentsMin),
+  windowDays: zod.number().min(1),
+  perCountry: zod.array(
+    zod.object({
+      countryCode: zod.string(),
+      count: zod.number().min(adminForumStatsResponsePerCountryItemCountMin),
+    }),
+  ),
+  hot: zod.array(
+    zod.object({
+      id: zod.string(),
+      countryCode: zod.string(),
+      title: zod.string(),
+      author: zod.string(),
+      replyCount: zod.number().min(adminForumStatsResponseHotItemReplyCountMin),
+      recentActivity: zod
+        .number()
+        .min(adminForumStatsResponseHotItemRecentActivityMin)
+        .describe("Number of replies in the recent window"),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Per-country activity table (posts, users, issues)
+ */
+export const adminCountryStatsResponsePostsMin = 0;
+
+export const adminCountryStatsResponseUsersMin = 0;
+
+export const adminCountryStatsResponseIssuesMin = 0;
+
+export const AdminCountryStatsResponseItem = zod.object({
+  countryCode: zod.string(),
+  posts: zod.number().min(adminCountryStatsResponsePostsMin),
+  users: zod.number().min(adminCountryStatsResponseUsersMin),
+  issues: zod.number().min(adminCountryStatsResponseIssuesMin),
+});
+export const AdminCountryStatsResponse = zod.array(
+  AdminCountryStatsResponseItem,
+);
+
+/**
+ * @summary Paginated list of users with optional search
+ */
+export const adminListUsersQueryPageDefault = 1;
+
+export const adminListUsersQueryPageSizeDefault = 20;
+export const adminListUsersQueryPageSizeMax = 100;
+
+export const AdminListUsersQueryParams = zod.object({
+  search: zod.coerce.string().optional(),
+  page: zod.coerce.number().min(1).default(adminListUsersQueryPageDefault),
+  pageSize: zod.coerce
+    .number()
+    .min(1)
+    .max(adminListUsersQueryPageSizeMax)
+    .default(adminListUsersQueryPageSizeDefault),
+});
+
+export const adminListUsersResponseTotalMin = 0;
+
+export const AdminListUsersResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      walletAddress: zod.string(),
+      tier: zod.enum(["free", "pro", "enterprise"]),
+      email: zod.union([zod.string(), zod.null()]).optional(),
+      displayName: zod.union([zod.string(), zod.null()]).optional(),
+      age: zod.union([zod.number(), zod.null()]).optional(),
+      gender: zod.union([zod.string(), zod.null()]).optional(),
+      createdAt: zod.coerce.date(),
+      lastLoginAt: zod.coerce.date(),
+      deactivated: zod.boolean(),
+      deactivatedAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+    }),
+  ),
+  total: zod.number().min(adminListUsersResponseTotalMin),
+  page: zod.number().min(1),
+  pageSize: zod.number().min(1),
+});
+
+/**
+ * @summary User profile + their forum posts and replies
+ */
+export const AdminGetUserParams = zod.object({
+  walletAddress: zod.coerce.string(),
+});
+
+export const adminGetUserResponsePostsItemReplyCountMin = 0;
+
+export const AdminGetUserResponse = zod.object({
+  user: zod.object({
+    walletAddress: zod.string(),
+    tier: zod.enum(["free", "pro", "enterprise"]),
+    email: zod.union([zod.string(), zod.null()]).optional(),
+    displayName: zod.union([zod.string(), zod.null()]).optional(),
+    age: zod.union([zod.number(), zod.null()]).optional(),
+    gender: zod.union([zod.string(), zod.null()]).optional(),
+    createdAt: zod.coerce.date(),
+    lastLoginAt: zod.coerce.date(),
+    deactivated: zod.boolean(),
+    deactivatedAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+  }),
+  posts: zod.array(
+    zod.object({
+      id: zod.string(),
+      countryCode: zod.string(),
+      title: zod.string(),
+      replyCount: zod.number().min(adminGetUserResponsePostsItemReplyCountMin),
+      createdAt: zod.coerce.date(),
+      deleted: zod.boolean(),
+    }),
+  ),
+  comments: zod.array(
+    zod.object({
+      id: zod.string(),
+      postId: zod.string(),
+      postTitle: zod.string(),
+      body: zod.string(),
+      createdAt: zod.coerce.date(),
+      deleted: zod.boolean(),
+    }),
+  ),
+});
+
+/**
+ * @summary Admin — list forum posts with filters
+ */
+export const AdminListForumPostsQueryParams = zod.object({
+  country: zod.coerce.string().optional(),
+  author: zod.coerce.string().optional(),
+  from: zod.coerce.string().optional().describe("ISO 8601 date or date-time"),
+  to: zod.coerce.string().optional().describe("ISO 8601 date or date-time"),
+});
+
+export const adminListForumPostsResponseReplyCountMin = 0;
+
+export const AdminListForumPostsResponseItem = zod.object({
+  id: zod.string(),
+  countryCode: zod.string(),
+  author: zod.string(),
+  userId: zod.union([zod.string(), zod.null()]).optional(),
+  title: zod.string(),
+  body: zod.union([zod.string(), zod.null()]).optional(),
+  replyCount: zod.number().min(adminListForumPostsResponseReplyCountMin),
+  createdAt: zod.coerce.date(),
+  deleted: zod.boolean(),
+});
+export const AdminListForumPostsResponse = zod.array(
+  AdminListForumPostsResponseItem,
+);
+
+/**
+ * @summary Admin — full post + comments
+ */
+export const AdminGetForumPostParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const adminGetForumPostResponsePostReplyCountMin = 0;
+
+export const AdminGetForumPostResponse = zod.object({
+  post: zod.object({
+    id: zod.string(),
+    countryCode: zod.string(),
+    author: zod.string(),
+    userId: zod.union([zod.string(), zod.null()]).optional(),
+    title: zod.string(),
+    body: zod.union([zod.string(), zod.null()]).optional(),
+    replyCount: zod.number().min(adminGetForumPostResponsePostReplyCountMin),
+    createdAt: zod.coerce.date(),
+    deleted: zod.boolean(),
+  }),
+  comments: zod.array(
+    zod.object({
+      id: zod.string(),
+      postId: zod.string(),
+      parentReplyId: zod.union([zod.string(), zod.null()]).optional(),
+      author: zod.string(),
+      userId: zod.union([zod.string(), zod.null()]).optional(),
+      body: zod.string(),
+      createdAt: zod.coerce.date(),
+      deleted: zod.boolean(),
+    }),
+  ),
+});
+
+/**
+ * @summary Admin — soft-delete a forum post
+ */
+export const AdminDeleteForumPostParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
+ * @summary Admin — soft-delete a forum reply
+ */
+export const AdminDeleteForumReplyParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
  * @summary Top-level platform stats — total countries, issues, jobs analyzed, forum posts
  */
 export const GetDashboardStatsQueryParams = zod.object({

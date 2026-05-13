@@ -11,8 +11,18 @@ import citiesRouter from "./cities";
 import countryBannersRouter from "./countryBanners";
 import authRouter from "./auth";
 import paymentsRouter from "./payments";
+import adminRouter from "./admin";
+import { requireAdmin } from "../lib/adminSession";
 
 const router: IRouter = Router();
+
+// Protect all /admin/* routes except the auth endpoints (login/logout/me).
+router.use("/admin", (req, res, next) => {
+  if (req.path === "/auth/login" || req.path === "/auth/logout" || req.path === "/auth/me") {
+    return next();
+  }
+  return requireAdmin(req, res, next);
+});
 
 router.use(healthRouter);
 router.use(countriesRouter);
@@ -26,5 +36,6 @@ router.use(citiesRouter);
 router.use(countryBannersRouter);
 router.use(authRouter);
 router.use(paymentsRouter);
+router.use(adminRouter);
 
 export default router;

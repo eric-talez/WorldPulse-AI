@@ -438,6 +438,165 @@ export const PlanId = {
   enterprise: "enterprise",
 } as const;
 
+export interface AdminLoginInput {
+  /** @minLength 1 */
+  email: string;
+  /** @minLength 1 */
+  password: string;
+}
+
+export interface AdminSession {
+  authenticated: boolean;
+  email: string;
+}
+
+export interface AdminSessionResponse {
+  authenticated: boolean;
+  email?: string | null;
+}
+
+export type AdminUserStatsDailyItem = {
+  /** YYYY-MM-DD */
+  date: string;
+  /** @minimum 0 */
+  signups: number;
+  /** @minimum 0 */
+  deactivations: number;
+};
+
+export interface AdminUserStats {
+  /** @minimum 0 */
+  totalUsers: number;
+  /** @minimum 0 */
+  deactivatedUsers: number;
+  /** @minimum 0 */
+  newToday: number;
+  /** @minimum 0 */
+  newThisWeek: number;
+  /** @minimum 0 */
+  newThisMonth: number;
+  daily: AdminUserStatsDailyItem[];
+}
+
+export interface AdminForumCountryRank {
+  countryCode: string;
+  /** @minimum 0 */
+  count: number;
+}
+
+export interface AdminHotPost {
+  id: string;
+  countryCode: string;
+  title: string;
+  author: string;
+  /** @minimum 0 */
+  replyCount: number;
+  /**
+   * Number of replies in the recent window
+   * @minimum 0
+   */
+  recentActivity: number;
+  createdAt: string;
+}
+
+export interface AdminForumStats {
+  /** @minimum 0 */
+  totalPosts: number;
+  /** @minimum 0 */
+  totalComments: number;
+  /** @minimum 1 */
+  windowDays: number;
+  perCountry: AdminForumCountryRank[];
+  hot: AdminHotPost[];
+}
+
+export interface AdminCountryRow {
+  countryCode: string;
+  /** @minimum 0 */
+  posts: number;
+  /** @minimum 0 */
+  users: number;
+  /** @minimum 0 */
+  issues: number;
+}
+
+export interface AdminUser {
+  walletAddress: string;
+  tier: UserTier;
+  email?: string | null;
+  displayName?: string | null;
+  age?: number | null;
+  gender?: string | null;
+  createdAt: string;
+  lastLoginAt: string;
+  deactivated: boolean;
+  deactivatedAt?: string | null;
+}
+
+export interface AdminUserPage {
+  items: AdminUser[];
+  /** @minimum 0 */
+  total: number;
+  /** @minimum 1 */
+  page: number;
+  /** @minimum 1 */
+  pageSize: number;
+}
+
+export interface AdminUserPostRef {
+  id: string;
+  countryCode: string;
+  title: string;
+  /** @minimum 0 */
+  replyCount: number;
+  createdAt: string;
+  deleted: boolean;
+}
+
+export interface AdminUserCommentRef {
+  id: string;
+  postId: string;
+  postTitle: string;
+  body: string;
+  createdAt: string;
+  deleted: boolean;
+}
+
+export interface AdminUserDetail {
+  user: AdminUser;
+  posts: AdminUserPostRef[];
+  comments: AdminUserCommentRef[];
+}
+
+export interface AdminForumPost {
+  id: string;
+  countryCode: string;
+  author: string;
+  userId?: string | null;
+  title: string;
+  body?: string | null;
+  /** @minimum 0 */
+  replyCount: number;
+  createdAt: string;
+  deleted: boolean;
+}
+
+export interface AdminForumComment {
+  id: string;
+  postId: string;
+  parentReplyId?: string | null;
+  author: string;
+  userId?: string | null;
+  body: string;
+  createdAt: string;
+  deleted: boolean;
+}
+
+export interface AdminForumPostDetail {
+  post: AdminForumPost;
+  comments: AdminForumComment[];
+}
+
 export interface CreateOrderInput {
   plan: PlanId;
 }
@@ -632,6 +791,32 @@ export const ListForecastsCategory = {
 
 export type GetForecastAccuracyParams = {
   planet?: Planet;
+};
+
+export type AdminListUsersParams = {
+  search?: string;
+  /**
+   * @minimum 1
+   */
+  page?: number;
+  /**
+   * @minimum 1
+   * @maximum 100
+   */
+  pageSize?: number;
+};
+
+export type AdminListForumPostsParams = {
+  country?: string;
+  author?: string;
+  /**
+   * ISO 8601 date or date-time
+   */
+  from?: string;
+  /**
+   * ISO 8601 date or date-time
+   */
+  to?: string;
 };
 
 export type GetDashboardStatsParams = {

@@ -8,10 +8,12 @@ export const forumRepliesTable = pgTable("forum_replies", {
     .references(() => forumPostsTable.id, { onDelete: "cascade" }),
   parentReplyId: uuid("parent_reply_id"),
   author: text("author").notNull(),
+  userId: text("user_id"),
   body: text("body").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
 export type ForumReply = typeof forumRepliesTable.$inferSelect;
