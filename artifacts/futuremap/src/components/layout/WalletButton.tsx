@@ -51,12 +51,23 @@ export default function WalletButton() {
         description: t("이제 결제와 등급 업그레이드가 가능합니다.", "You can now subscribe and upgrade your tier."),
       });
     } catch (err) {
+      // MetaMask only injects window.ethereum into top-level windows, not
+      // into iframes (such as Replit's preview pane). When detection fails
+      // inside an iframe we surface a much more useful hint than "install
+      // MetaMask" — the user almost certainly already has it installed.
+      const inIframe =
+        typeof window !== "undefined" && window.top !== window.self;
       const msg =
         err instanceof WalletNotInstalledError
-          ? t(
-              "EVM 지갑이 감지되지 않았습니다. MetaMask를 설치해 주세요.",
-              "No EVM wallet detected. Please install MetaMask.",
-            )
+          ? inIframe
+            ? t(
+                "미리보기 창에서는 지갑이 감지되지 않습니다. 우측 상단의 ‘새 탭에서 열기’ 아이콘을 눌러 외부 탭에서 다시 시도해 주세요.",
+                "Wallets are not exposed inside the preview pane. Open this app in a new tab (use the ↗ icon at the top right of the preview) and try again.",
+              )
+            : t(
+                "EVM 지갑이 감지되지 않았습니다. MetaMask를 설치해 주세요.",
+                "No EVM wallet detected. Please install MetaMask.",
+              )
           : err instanceof Error && /User rejected/i.test(err.message)
             ? t("서명을 거절했습니다.", "Signature rejected.")
             : t("지갑 연결에 실패했습니다.", "Failed to connect wallet.");
