@@ -461,18 +461,21 @@ export default function Home() {
       },
     },
   );
+  // Cities also back Moon/Mars sub-locations ("sites") — countryCode there
+  // is the parent location code (e.g. "MOON-ARTEMIS"). Use activePanelCode so
+  // the same flow works on Earth and in space.
   const { data: countryCities } = useListCountryCities(
-    selectedCountryCode || "",
+    activePanelCode || "",
     {
       query: {
-        enabled: planet === "earth" && !!selectedCountryCode,
-        queryKey: countryCitiesQueryKey(selectedCountryCode || ""),
+        enabled: !!activePanelCode,
+        queryKey: countryCitiesQueryKey(activePanelCode || ""),
       },
     },
   );
   const { data: cityIssues } = useListCityIssues(selectedCityId || "", {
     query: {
-      enabled: planet === "earth" && !!selectedCityId,
+      enabled: !!selectedCityId,
       queryKey: cityIssuesQueryKey(selectedCityId || ""),
     },
   });
@@ -526,10 +529,10 @@ export default function Home() {
     setSelectedCategory(undefined);
   }, [planet]);
 
-  // If country is cleared, also clear city.
+  // If country / location is cleared, also clear city / site.
   useEffect(() => {
-    if (!selectedCountryCode) setSelectedCityId(null);
-  }, [selectedCountryCode]);
+    if (!selectedCountryCode && !selectedLocationCode) setSelectedCityId(null);
+  }, [selectedCountryCode, selectedLocationCode]);
 
   // Load Cesium SDK once.
   useEffect(() => {
@@ -900,6 +903,34 @@ export default function Home() {
         });
       });
     } else if (planet !== "earth") {
+      // Site (sub-location) pins when a location is selected and sites loaded.
+      if (selectedLocationCode && countryCities && countryCities.length > 0) {
+        countryCities.forEach((site) => {
+          viewer.entities.add({
+            id: `site-${site.id}`,
+            cityId: site.id,
+            position: Cesium.Cartesian3.fromDegrees(site.longitude, site.latitude),
+            point: {
+              pixelSize: 9,
+              color: Cesium.Color.fromCssColorString("#22d3ee").withAlpha(0.85),
+              outlineColor: Cesium.Color.fromCssColorString("#22d3ee"),
+              outlineWidth: 2,
+              disableDepthTestDistance: Number.POSITIVE_INFINITY,
+            },
+            label: {
+              text: language === "ko" ? site.nameKo : site.name,
+              font: "11px sans-serif",
+              fillColor: Cesium.Color.fromCssColorString("#e5e7eb"),
+              outlineColor: Cesium.Color.BLACK,
+              outlineWidth: 2,
+              style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+              pixelOffset: new Cesium.Cartesian2(0, -16),
+              disableDepthTestDistance: Number.POSITIVE_INFINITY,
+              scale: 0.85,
+            },
+          });
+        });
+      }
       planetInfo.locations.forEach((loc) => {
         const accent = planet === "moon" ? "#cbd5f5" : "#ff7a59";
         viewer.entities.add({
@@ -927,7 +958,7 @@ export default function Home() {
         });
       });
     }
-  }, [globeReady, planetInfo, planet, countries, language, selectedCountryCode, countryCities]);
+  }, [globeReady, planetInfo, planet, countries, language, selectedCountryCode, selectedLocationCode, countryCities]);
 
   // Fly to selected country / city / event on Earth
   useEffect(() => {
@@ -996,31 +1027,80 @@ export default function Home() {
     planet,
   ]);
 
-  // Fly to selected location
+  // Fly to selected location / site / event on Moon or Mars.
   useEffect(() => {
     const viewer = viewerRef.current;
     if (
       !viewer ||
       !globeReady ||
       planet === "earth" ||
-      !selectedLocationCode ||
       !planetInfo
     )
       return;
-    const loc = planetInfo.locations.find(
-      (l) => l.code === selectedLocationCode,
-    );
-    if (!loc) return;
     const Cesium = window.Cesium;
-    viewer.camera.flyTo({
-      destination: Cesium.Cartesian3.fromDegrees(
-        loc.longitude,
-        loc.latitude,
-        planetInfo.ellipsoidRadius * 1.6,
-      ),
-      duration: 1.2,
-    });
-  }, [selectedLocationCode, planetInfo, planet, globeReady]);
+
+    if (selectedIssueId) {
+      const issue =
+        issueDetail ??
+        cityIssues?.find((i) => i.id === selectedIssueId) ??
+        issues?.find((i) => i.id === selectedIssueId);
+      const site = countryCities?.find((c) => c.id === issue?.cityId);
+      const loc = planetInfo.locations.find(
+        (l) => l.code === (issue?.countryCode ?? selectedLocationCode),
+      );
+      const lon = site?.longitude ?? loc?.longitude;
+      const lat = site?.latitude ?? loc?.latitude;
+      if (lon != null && lat != null) {
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(lon, lat, ALTITUDE_EVENT),
+          duration: 1.0,
+        });
+        return;
+      }
+    }
+
+    if (selectedCityId) {
+      const site = countryCities?.find((c) => c.id === selectedCityId);
+      if (site) {
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(
+            site.longitude,
+            site.latitude,
+            ALTITUDE_CITY,
+          ),
+          duration: 1.2,
+        });
+        return;
+      }
+    }
+
+    if (selectedLocationCode) {
+      const loc = planetInfo.locations.find(
+        (l) => l.code === selectedLocationCode,
+      );
+      if (loc) {
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(
+            loc.longitude,
+            loc.latitude,
+            ALTITUDE_CITY,
+          ),
+          duration: 1.2,
+        });
+      }
+    }
+  }, [
+    selectedLocationCode,
+    selectedCityId,
+    selectedIssueId,
+    issueDetail,
+    countryCities,
+    cityIssues,
+    issues,
+    planetInfo,
+    planet,
+    globeReady,
+  ]);
 
   const handleIssueClick = (
     issueId: string,
@@ -1033,8 +1113,11 @@ export default function Home() {
       setSelectedLocationCode(null);
       if (issueCityId) setSelectedCityId(issueCityId);
     } else {
+      // For Moon/Mars the issue's "countryCode" is the parent location code
+      // (sites live under that location with countryCode = location code).
       setSelectedLocationCode(issueCountryCode);
       setSelectedCountryCode(null);
+      if (issueCityId) setSelectedCityId(issueCityId);
     }
   };
 
@@ -1095,10 +1178,7 @@ export default function Home() {
     `https://picsum.photos/seed/${encodeURIComponent(id)}/640/320`;
   const showIssuePanel = !!selectedIssue;
   const showCityPanel =
-    !showIssuePanel &&
-    planet === "earth" &&
-    !!selectedCityId &&
-    !!selectedCity;
+    !showIssuePanel && !!selectedCityId && !!selectedCity;
   const showCountryPanel =
     !showIssuePanel &&
     !showCityPanel &&
@@ -1107,6 +1187,7 @@ export default function Home() {
     !!countryDetail;
   const showLocationPanel =
     !showIssuePanel &&
+    !showCityPanel &&
     planet !== "earth" &&
     !!selectedLocationCode &&
     !!locationDetail;
@@ -1139,11 +1220,14 @@ export default function Home() {
   if (planet !== "earth" && selectedLocationCode && locationDetail) {
     crumbs.push({
       label: `${locationDetail.location.flag} ${language === "ko" ? locationDetail.location.nameKo : locationDetail.location.name}`,
-      onClick: () => setSelectedIssueId(null),
-      current: !selectedIssueId,
+      onClick: () => {
+        setSelectedIssueId(null);
+        setSelectedCityId(null);
+      },
+      current: !selectedCityId && !selectedIssueId,
     });
   }
-  if (planet === "earth" && selectedCity) {
+  if (selectedCity) {
     crumbs.push({
       label: language === "ko" ? selectedCity.nameKo : selectedCity.name,
       onClick: () => setSelectedIssueId(null),
@@ -1381,8 +1465,10 @@ export default function Home() {
                       ))}
                 </div>
               )}
-              {/* City list */}
-              {planet === "earth" && selectedCountryCode && !selectedCityId && (
+              {/* City / Site list */}
+              {((planet === "earth" && selectedCountryCode) ||
+                (planet !== "earth" && selectedLocationCode)) &&
+                !selectedCityId && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {countryCities?.map((city) => (
                     <button
@@ -1410,8 +1496,8 @@ export default function Home() {
                   )}
                 </div>
               )}
-              {/* Event list (city issues) */}
-              {planet === "earth" && selectedCityId && (
+              {/* Event list (city / site issues) */}
+              {selectedCityId && (
                 <div className="space-y-2">
                   {cityCategorySummary.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-2">
@@ -1729,8 +1815,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Earth City Overlay */}
-      {planet === "earth" && (
+        {/* City / Site Overlay (Earth cities + Moon/Mars sites) */}
+      {(
         <div
           className={`absolute top-20 left-4 bottom-4 w-80 bg-background/80 backdrop-blur-xl border border-border/50 rounded-xl transition-all duration-500 transform ${
             showCityPanel && !leftCollapsed
@@ -1745,16 +1831,19 @@ export default function Home() {
                   <div className="flex items-center gap-2 mb-1">
                     <MapPin className="w-5 h-5 text-cyan-400" />
                     <span className="text-[10px] font-mono text-muted-foreground tracking-wider uppercase">
-                      {countryDetail?.country.flag}{" "}
+                      {(countryDetail?.country.flag ??
+                        locationDetail?.location.flag) ?? ""}{" "}
                       {language === "ko"
-                        ? countryDetail?.country.nameKo
-                        : countryDetail?.country.name}
+                        ? (countryDetail?.country.nameKo ??
+                          locationDetail?.location.nameKo)
+                        : (countryDetail?.country.name ??
+                          locationDetail?.location.name)}
                     </span>
                   </div>
                   <h2 className="text-xl font-bold">
                     {language === "ko" ? selectedCity.nameKo : selectedCity.name}
                   </h2>
-                  {selectedCity.population != null && (
+                  {selectedCity.population != null && selectedCity.population > 0 && (
                     <div className="text-[11px] font-mono text-muted-foreground mt-0.5">
                       {t("인구", "Pop")}:{" "}
                       {selectedCity.population.toLocaleString()}
@@ -1899,6 +1988,29 @@ export default function Home() {
                       ? locationDetail.location.descriptionKo
                       : locationDetail.location.description}
                   </p>
+
+                  {countryCities && countryCities.length > 0 && (
+                    <div>
+                      <h3 className="flex items-center gap-2 text-sm font-bold text-primary mb-3">
+                        <MapPin className="w-4 h-4" />
+                        {t("사이트", "Sites")}
+                      </h3>
+                      <div className="grid grid-cols-1 gap-2">
+                        {countryCities.map((site) => (
+                          <button
+                            key={site.id}
+                            onClick={() => setSelectedCityId(site.id)}
+                            className="text-left p-2.5 bg-secondary/40 border border-border/40 rounded-lg hover:border-primary/50 transition-colors flex items-center gap-2"
+                          >
+                            <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
+                            <div className="text-xs font-medium text-foreground/90">
+                              {language === "ko" ? site.nameKo : site.name}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <h3 className="flex items-center gap-2 text-sm font-bold text-primary mb-3">

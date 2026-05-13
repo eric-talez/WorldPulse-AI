@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import {
   db,
   countriesTable,
@@ -7,7 +8,7 @@ import {
   jobReportsTable,
 } from "@workspace/db";
 import { analyzeJob, analyzeSpaceJob } from "./lib/jobAnalysis";
-import { SPACE_SEED_ISSUES, PLANETS } from "./lib/planets";
+import { SPACE_SEED_ISSUES, SPACE_SITES, SPACE_SITE_ISSUES, PLANETS } from "./lib/planets";
 import { SEED_CITIES, SEED_CITY_ISSUES } from "./lib/citiesSeed";
 
 const COUNTRIES = [
@@ -125,11 +126,12 @@ const SEED_REPORTS = [
 async function main(): Promise<void> {
   const existingCities = await db.select().from(citiesTable).limit(1);
   const existing = await db.select().from(countriesTable).limit(1);
+  const existingSpaceSite = await db
+    .select()
+    .from(citiesTable)
+    .where(eq(citiesTable.id, SPACE_SITES[0]!.id))
+    .limit(1);
   const now = Date.now();
-  if (existing.length > 0 && existingCities.length > 0) {
-    console.log("Seed: data already exists, skipping.");
-    return;
-  }
 
   if (existing.length === 0) {
     console.log("Seed: inserting countries…");
@@ -150,6 +152,35 @@ async function main(): Promise<void> {
         headline: iss.headline,
         body: iss.body,
         publishedAt: new Date(now - idx * 1000 * 60 * 9),
+      })),
+    );
+  }
+
+  if (existingSpaceSite.length === 0) {
+    console.log("Seed: inserting space sites (moon/mars sub-locations)…");
+    await db.insert(citiesTable).values(
+      SPACE_SITES.map((s) => ({
+        id: s.id,
+        countryCode: s.parentLocationCode,
+        name: s.name,
+        nameKo: s.nameKo,
+        latitude: s.latitude,
+        longitude: s.longitude,
+        population: 0,
+        importance: s.importance,
+      })),
+    );
+
+    console.log("Seed: inserting space site signals…");
+    await db.insert(issuesTable).values(
+      SPACE_SITE_ISSUES.map((iss, idx) => ({
+        cityId: iss.cityId,
+        countryCode: iss.parentLocationCode,
+        planet: iss.planet,
+        category: iss.category,
+        headline: iss.headline,
+        body: iss.body,
+        publishedAt: new Date(now - idx * 1000 * 60 * 31),
       })),
     );
   }

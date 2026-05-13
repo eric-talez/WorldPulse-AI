@@ -212,6 +212,78 @@ export function findLocation(
   );
 }
 
+/** Curated sub-locations (sites) under each Moon/Mars location. Stored in the
+ *  `cities` table with `countryCode` set to the parent location code so the
+ *  same `/countries/:code/cities` + `/cities/:id/issues` flow works for space. */
+export interface SpaceSite {
+  id: string;
+  parentLocationCode: string;
+  planet: Planet;
+  name: string;
+  nameKo: string;
+  latitude: number;
+  longitude: number;
+  importance: number;
+}
+
+export const SPACE_SITES: SpaceSite[] = [
+  // Moon — Apollo 11
+  { id: "MOON-APOLLO11-LM", parentLocationCode: "MOON-APOLLO11", planet: "moon", name: "Eagle Lander Pad", nameKo: "이글호 착륙 패드", latitude: 0.674, longitude: 23.473, importance: 90 },
+  { id: "MOON-APOLLO11-EVA", parentLocationCode: "MOON-APOLLO11", planet: "moon", name: "EVA Heritage Trail", nameKo: "유산 보호 산책로", latitude: 0.687, longitude: 23.487, importance: 70 },
+  // Moon — Artemis Base Camp
+  { id: "MOON-ARTEMIS-HAB1", parentLocationCode: "MOON-ARTEMIS", planet: "moon", name: "Habitat Module Alpha", nameKo: "거주 모듈 알파", latitude: -89.9, longitude: 0.0, importance: 95 },
+  { id: "MOON-ARTEMIS-COMM", parentLocationCode: "MOON-ARTEMIS", planet: "moon", name: "Polar Comm Relay", nameKo: "극지 통신 중계", latitude: -89.85, longitude: 5.0, importance: 80 },
+  { id: "MOON-ARTEMIS-PAD", parentLocationCode: "MOON-ARTEMIS", planet: "moon", name: "Crew Landing Pad", nameKo: "유인 착륙 패드", latitude: -89.92, longitude: -3.5, importance: 88 },
+  // Moon — Shackleton Crater
+  { id: "MOON-SHACKLETON-MINE", parentLocationCode: "MOON-SHACKLETON", planet: "moon", name: "Ice Mine Shaft 1", nameKo: "얼음 채굴 1호 갱", latitude: -89.66, longitude: 129.2, importance: 92 },
+  { id: "MOON-SHACKLETON-PROC", parentLocationCode: "MOON-SHACKLETON", planet: "moon", name: "Water Processing Plant", nameKo: "물 정제 플랜트", latitude: -89.62, longitude: 129.5, importance: 84 },
+  // Moon — Mare Imbrium
+  { id: "MOON-MAREIMBRIUM-PRINT", parentLocationCode: "MOON-MAREIMBRIUM", planet: "moon", name: "Regolith 3D-Print Lab", nameKo: "레골리스 3D 프린팅 랩", latitude: 32.8, longitude: -15.6, importance: 78 },
+  { id: "MOON-MAREIMBRIUM-QUARRY", parentLocationCode: "MOON-MAREIMBRIUM", planet: "moon", name: "Basalt Quarry North", nameKo: "북부 현무암 채석장", latitude: 32.95, longitude: -15.4, importance: 70 },
+  // Mars — Jezero Crater
+  { id: "MARS-JEZERO-CACHE", parentLocationCode: "MARS-JEZERO", planet: "mars", name: "Sample Cache Depot", nameKo: "시료 보관소", latitude: 18.4, longitude: 77.7, importance: 92 },
+  { id: "MARS-JEZERO-DELTA", parentLocationCode: "MARS-JEZERO", planet: "mars", name: "Ancient Delta Lab", nameKo: "고대 삼각주 연구소", latitude: 18.45, longitude: 77.6, importance: 85 },
+  // Mars — Gale Crater
+  { id: "MARS-GALE-YK", parentLocationCode: "MARS-GALE", planet: "mars", name: "Yellowknife Bay Camp", nameKo: "옐로나이프 베이 캠프", latitude: -5.4, longitude: 137.8, importance: 80 },
+  { id: "MARS-GALE-SHARP", parentLocationCode: "MARS-GALE", planet: "mars", name: "Mount Sharp Outpost", nameKo: "샤프산 전초기지", latitude: -5.5, longitude: 137.9, importance: 75 },
+  // Mars — Olympus Mons
+  { id: "MARS-OLYMPUS-GEO", parentLocationCode: "MARS-OLYMPUS", planet: "mars", name: "Geothermal Survey Site", nameKo: "지열 조사 지점", latitude: 18.65, longitude: -133.8, importance: 78 },
+  { id: "MARS-OLYMPUS-MINE", parentLocationCode: "MARS-OLYMPUS", planet: "mars", name: "Foothill Mineral Camp", nameKo: "산기슭 광물 캠프", latitude: 18.55, longitude: -133.9, importance: 72 },
+  // Mars — Colony Alpha
+  { id: "MARS-COLONY-A-DOME", parentLocationCode: "MARS-COLONY-A", planet: "mars", name: "Habitat Dome 1", nameKo: "거주 돔 1호", latitude: 4.5, longitude: 137.4, importance: 95 },
+  { id: "MARS-COLONY-A-PORT", parentLocationCode: "MARS-COLONY-A", planet: "mars", name: "Starship Port", nameKo: "스타십 우주항", latitude: 4.55, longitude: 137.5, importance: 90 },
+  { id: "MARS-COLONY-A-FARM", parentLocationCode: "MARS-COLONY-A", planet: "mars", name: "Greenhouse Farm Block", nameKo: "온실 농업 블록", latitude: 4.45, longitude: 137.35, importance: 82 },
+];
+
+/** Curated site-tagged signals for Moon/Mars. */
+export const SPACE_SITE_ISSUES: Array<{
+  cityId: string;
+  parentLocationCode: string;
+  planet: Planet;
+  category: string;
+  headline: string;
+  body: string;
+}> = [
+  { cityId: "MOON-APOLLO11-LM", parentLocationCode: "MOON-APOLLO11", planet: "moon", category: "news", headline: "이글호 착륙 패드 정밀 3D 스캔 완료", body: "유산 보호용 디지털 트윈 구축 1단계 마무리." },
+  { cityId: "MOON-APOLLO11-EVA", parentLocationCode: "MOON-APOLLO11", planet: "moon", category: "culture", headline: "EVA 산책로, 가상 관광 콘텐츠로 재공개", body: "유엔 협약 초안과 연계한 시범 프로젝트." },
+  { cityId: "MOON-ARTEMIS-HAB1", parentLocationCode: "MOON-ARTEMIS", planet: "moon", category: "lunar_base", headline: "거주 모듈 알파, 90일 유인 체류 시뮬레이션 통과", body: "생명 유지 시스템 안정성 검증 완료." },
+  { cityId: "MOON-ARTEMIS-COMM", parentLocationCode: "MOON-ARTEMIS", planet: "moon", category: "tech", headline: "극지 통신 중계, 지구 직통 대역폭 4배 확장", body: "원격 로봇 조종 지연 시간 200ms 미만." },
+  { cityId: "MOON-ARTEMIS-PAD", parentLocationCode: "MOON-ARTEMIS", planet: "moon", category: "ai_jobs", headline: "착륙 패드 정비 인력 지구 원격 채용 시작", body: "야간 교대 근무 — 시급 기준 지구 평균의 6배." },
+  { cityId: "MOON-SHACKLETON-MINE", parentLocationCode: "MOON-SHACKLETON", planet: "moon", category: "space", headline: "1호 갱 시추 깊이 80m 돌파 — 얼음 함량 확인", body: "민간 컨소시엄 라이선스 심사 가속." },
+  { cityId: "MOON-SHACKLETON-PROC", parentLocationCode: "MOON-SHACKLETON", planet: "moon", category: "tech", headline: "물 정제 플랜트, 일일 산출량 목표치 초과 달성", body: "추진제용 산소 분리 라인 정상 가동." },
+  { cityId: "MOON-MAREIMBRIUM-PRINT", parentLocationCode: "MOON-MAREIMBRIUM", planet: "moon", category: "tech", headline: "레골리스 3D 프린팅, 1.5m 두께 벽체 적층 성공", body: "방사선 차폐 거주 모듈 자가 건설 검증." },
+  { cityId: "MOON-MAREIMBRIUM-QUARRY", parentLocationCode: "MOON-MAREIMBRIUM", planet: "moon", category: "ai_jobs", headline: "북부 채석장, 자율 굴삭기 야간 운용 정착", body: "지구 원격 감시 인력 12명 상시 근무." },
+  { cityId: "MARS-JEZERO-CACHE", parentLocationCode: "MARS-JEZERO", planet: "mars", category: "space", headline: "시료 보관소, 38번째 캐싱 튜브 적치 완료", body: "샘플 회수 미션 발사창 5년 내 도래." },
+  { cityId: "MARS-JEZERO-DELTA", parentLocationCode: "MARS-JEZERO", planet: "mars", category: "news", headline: "고대 삼각주 연구소, 유기물 신호 재현 실험 착수", body: "지하 1.5m 코어 샘플 연속 분석." },
+  { cityId: "MARS-GALE-YK", parentLocationCode: "MARS-GALE", planet: "mars", category: "tech", headline: "옐로나이프 베이 캠프, 메탄 센서 어레이 증설", body: "농도 이상 변동 정밀 추적 체계 완성." },
+  { cityId: "MARS-GALE-SHARP", parentLocationCode: "MARS-GALE", planet: "mars", category: "space", headline: "샤프산 전초기지, 지층별 기후 데이터 5억 년치 확보", body: "AI 기반 화성 고기후 모델 갱신." },
+  { cityId: "MARS-OLYMPUS-GEO", parentLocationCode: "MARS-OLYMPUS", planet: "mars", category: "tech", headline: "지열 조사 지점, 지하 활화산 활동 흔적 포착", body: "에너지 자원화 가능성 검토 시작." },
+  { cityId: "MARS-OLYMPUS-MINE", parentLocationCode: "MARS-OLYMPUS", planet: "mars", category: "ai_jobs", headline: "산기슭 광물 캠프, 원격 분광 분석가 50명 모집", body: "민간 우주 광업 1호 라이선스 절차 진입." },
+  { cityId: "MARS-COLONY-A-DOME", parentLocationCode: "MARS-COLONY-A", planet: "mars", category: "mars_habitat", headline: "거주 돔 1호, 200일 무인 환경 검증 종료", body: "내년 유인 입주 일정 확정 단계." },
+  { cityId: "MARS-COLONY-A-PORT", parentLocationCode: "MARS-COLONY-A", planet: "mars", category: "space", headline: "스타십 우주항, 무인 화물 5회 연속 착륙 성공", body: "콜로니 인프라 자재 누적 240톤 도착." },
+  { cityId: "MARS-COLONY-A-FARM", parentLocationCode: "MARS-COLONY-A", planet: "mars", category: "ai_jobs", headline: "온실 농업 블록, 우주 농업 전문가 1기 정착 완료", body: "감자·시금치·딸기 3종 안정 생산 단계." },
+];
+
 /** Curated Moon/Mars seed signals. Earth signals come from real DB issues. */
 export const SPACE_SEED_ISSUES: Array<{
   countryCode: string;
