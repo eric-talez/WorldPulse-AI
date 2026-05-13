@@ -608,7 +608,15 @@ export default function Home() {
     const script = document.createElement("script");
     script.src =
       "https://cdn.jsdelivr.net/npm/cesium@1.122.0/Build/Cesium/Cesium.js";
-    script.onload = () => setCesiumLoaded(true);
+    script.onload = () => {
+      const ionToken = import.meta.env.VITE_CESIUM_ION_TOKEN as
+        | string
+        | undefined;
+      if (ionToken && window.Cesium?.Ion) {
+        window.Cesium.Ion.defaultAccessToken = ionToken;
+      }
+      setCesiumLoaded(true);
+    };
     document.head.appendChild(script);
 
     return () => {
@@ -641,11 +649,15 @@ export default function Home() {
       const radius = planetInfo.ellipsoidRadius;
       const ellipsoid = new Cesium.Ellipsoid(radius, radius, radius);
 
+      const ionEnabled =
+        planet === "earth" && !!Cesium.Ion?.defaultAccessToken;
       let imageryProvider: any = null;
       try {
-        if (planet === "earth") {
-          // ESRI World Imagery — public, no token, WebMercator. Replaces Cesium ion default
-          // (which requires an access token and otherwise leaves Earth as a flat baseColor).
+        if (planet === "earth" && !ionEnabled) {
+          // Fallback (no ion token configured): ESRI World Imagery — public,
+          // no token, WebMercator. When VITE_CESIUM_ION_TOKEN is set we skip
+          // this and load Cesium ion's Bing Maps Aerial with Labels asynchronously
+          // after viewer construction (see ionEnabled branch below).
           imageryProvider = new Cesium.UrlTemplateImageryProvider({
             url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
             maximumLevel: 18,
@@ -708,6 +720,42 @@ export default function Home() {
 
       const viewer = new Cesium.Viewer(cesiumContainer.current, viewerOptions);
 
+      // Cesium ion: replace Earth imagery with Bing Maps Aerial with Labels
+      // (asset 2 — real satellite photography) and enable Cesium World Terrain
+      // (asset 1 — true 3D elevation so mountains/canyons rise off the sphere).
+      // Both load asynchronously; if either fails we silently keep whatever
+      // base layer is already mounted (ESRI fallback or just the baseColor).
+      if (ionEnabled) {
+        (async () => {
+          try {
+            const provider = await Cesium.IonImageryProvider.fromAssetId(2);
+            if (viewer.isDestroyed()) return;
+            viewer.imageryLayers.removeAll();
+            const layer = viewer.imageryLayers.addImageryProvider(provider);
+            layer.brightness = 1.0;
+            layer.contrast = 1.0;
+            layer.saturation = 1.0;
+            layer.gamma = 1.0;
+            viewer.scene.requestRender();
+          } catch (err) {
+            console.warn("Cesium ion Bing Aerial load failed:", err);
+          }
+        })();
+        (async () => {
+          try {
+            const terrain = await Cesium.createWorldTerrainAsync({
+              requestVertexNormals: true,
+              requestWaterMask: true,
+            });
+            if (viewer.isDestroyed()) return;
+            viewer.terrainProvider = terrain;
+            viewer.scene.requestRender();
+          } catch (err) {
+            console.warn("Cesium World Terrain load failed:", err);
+          }
+        })();
+      }
+
       viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString(
         planetInfo.baseColor,
       );
@@ -765,10 +813,11 @@ export default function Home() {
       }
 
       // Earth-only reference overlay: country borders, place names and roads from
-      // ESRI's free "World_Boundaries_and_Places" tile service. Provides the
-      // cartographic detail that real D5/Cesium scenes get from labeled basemaps,
-      // again with no ion token required.
-      if (planet === "earth") {
+      // ESRI's free "World_Boundaries_and_Places" tile service. Skipped when
+      // ionEnabled because Bing Maps Aerial with Labels (asset 2) already has
+      // crisp labels baked into the imagery — stacking ESRI on top would double
+      // up label glyphs.
+      if (planet === "earth" && !ionEnabled) {
         try {
           const labelsProvider = new Cesium.UrlTemplateImageryProvider({
             url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
