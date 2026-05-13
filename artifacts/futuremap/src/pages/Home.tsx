@@ -733,12 +733,15 @@ export default function Home() {
         if (scene.skyAtmosphere) {
           scene.skyAtmosphere.hueShift = -0.02;
           scene.skyAtmosphere.saturationShift = 0.15;
-          scene.skyAtmosphere.brightnessShift = 0.1;
+          // Slightly lower than before so the new cloud overlay does not
+          // wash out the rim glow when both stack on the limb.
+          scene.skyAtmosphere.brightnessShift = 0.07;
         }
-        // Soft horizon fog when zoomed close.
+        // Soft horizon fog when zoomed close. Thinned a touch to keep clouds
+        // legible at low altitude.
         if (scene.fog) {
           scene.fog.enabled = true;
-          scene.fog.density = 1.2e-4;
+          scene.fog.density = 1.0e-4;
         }
         // Bright ground atmosphere halo, tuned for the lit Earth.
         if ("atmosphereLightIntensity" in globe) globe.atmosphereLightIntensity = 12;
@@ -819,6 +822,42 @@ export default function Home() {
           nightLayer.brightness = 1.4;
         } catch (err) {
           console.warn("Could not attach Earth night-lights overlay:", err);
+        }
+
+        // Faint cloud overlay from NASA GIBS MODIS Terra true-color snapshot.
+        // Clouds read as the brightest pixels in the image, so at low alpha
+        // they layer convincingly over the ESRI base while continents stay
+        // dominant. Pinned to a fixed recent date so a single static snapshot
+        // is served (the task explicitly excludes time-aware tiling).
+        try {
+          const cloudsProvider = new Cesium.UrlTemplateImageryProvider({
+            url: "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2024-06-01/250m/{z}/{y}/{x}.jpg",
+            tilingScheme: new Cesium.GeographicTilingScheme(),
+            tileWidth: 512,
+            tileHeight: 512,
+            maximumLevel: 6,
+            credit: "NASA GIBS / MODIS Terra",
+          });
+          if (cloudsProvider.errorEvent) {
+            let warnedClouds = false;
+            cloudsProvider.errorEvent.addEventListener(() => {
+              if (!warnedClouds) {
+                warnedClouds = true;
+                console.warn("Cloud overlay failed to load; continuing without clouds.");
+              }
+            });
+          }
+          const cloudsLayer = viewer.imageryLayers.addImageryProvider(cloudsProvider);
+          // Subtle — clouds are the bright pixels; keep continents dominant.
+          cloudsLayer.alpha = 0.3;
+          cloudsLayer.brightness = 1.15;
+          cloudsLayer.contrast = 1.1;
+          // Slightly softer on the night side so clouds don't compete with
+          // the city-lights glow.
+          cloudsLayer.dayAlpha = 0.35;
+          cloudsLayer.nightAlpha = 0.18;
+        } catch (err) {
+          console.warn("Could not attach Earth cloud overlay:", err);
         }
       }
 
