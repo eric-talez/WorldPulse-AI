@@ -64,6 +64,10 @@ A bilingual (KO/EN) global issue map and AI-driven job future report platform. U
 - Bilingual KO/EN with Korean as the default and primary copy. Korean strings should feel native (short, punchy headlines), not awkward translations.
 - Dark cinematic intelligence-room aesthetic — globe is the hero.
 
+## Tests
+
+- `artifacts/futuremap/tests/payments-flow.test-plan.md` — runnable test plan for the wallet/SIWE + Stripe checkout flow. Feed it to the testing skill (`runTest`) to re-cover the `/about` CTA gating, browser-driven SIWE login, and the Stripe checkout 401/200 branches.
+
 ## Gotchas
 
 - After editing `lib/db/src/schema/`, run `pnpm run typecheck:libs` before typechecking artifacts; the `@workspace/db` declarations need to be rebuilt for downstream packages.
