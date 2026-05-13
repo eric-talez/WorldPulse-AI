@@ -33,6 +33,7 @@ import {
   Plus,
   Minus,
   MapPin,
+  Info,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -127,11 +128,67 @@ const CATEGORY_LABEL_EN: Record<string, string> = {
   sports: "Sports",
   education: "Education",
 };
+const CATEGORY_DESC_KO: Record<string, string> = {
+  conflict: "무력 충돌, 전쟁, 군사 긴장",
+  politics: "선거, 정권 교체, 입법, 정책 변화",
+  economy: "환율, 금리, 시장, 무역, 고용 지표",
+  culture: "예술, 미디어, 라이프스타일, 사회 트렌드",
+  ai_jobs: "AI·자동화로 인한 일자리 변화",
+  disease: "감염병 확산, 보건 위기 경보",
+  tech: "신제품, 연구개발, 산업 혁신",
+  news: "위 분류에 들지 않는 일반 속보",
+  natural_disaster: "지진·태풍·홍수·산불 등 광역 재해",
+  cyber: "해킹, 데이터 유출, 사이버 공격",
+  terror: "테러 공격 및 공공 안전 위협",
+  climate: "기후 변화, 환경 정책, 탄소 이슈",
+  space: "우주 개발, 발사, 천체 이벤트",
+  lunar_base: "달 기지 건설·운영 소식",
+  mars_habitat: "화성 거주지·미션 소식",
+  diplomacy: "외교, 정상회담, 국제 합의·제재",
+  quake: "지진, 쓰나미, 지각 활동",
+  storm: "태풍, 허리케인, 폭우, 홍수",
+  wildfire: "산불, 폭염, 가뭄",
+  volcano: "화산 분화, 산사태",
+  energy: "석유·가스·전력·재생에너지 수급",
+  health: "공중보건, 의료 정책, 의약품",
+  society: "사회 운동, 시위, 인구·노동 이슈",
+  sports: "스포츠 경기, 선수 이적, 메가 이벤트",
+  education: "학교, 입시, 교육 정책",
+};
+const CATEGORY_DESC_EN: Record<string, string> = {
+  conflict: "Armed conflict, war, military tension",
+  politics: "Elections, regime change, legislation, policy",
+  economy: "FX, rates, markets, trade, jobs data",
+  culture: "Arts, media, lifestyle, social trends",
+  ai_jobs: "AI & automation impact on jobs",
+  disease: "Outbreaks and health alerts",
+  tech: "Product launches, R&D, industry shifts",
+  news: "General breaking news that doesn't fit elsewhere",
+  natural_disaster: "Quakes, storms, floods, wildfires at scale",
+  cyber: "Hacks, data breaches, cyberattacks",
+  terror: "Terror attacks and public-safety threats",
+  climate: "Climate change, env. policy, carbon",
+  space: "Space programs, launches, sky events",
+  lunar_base: "Lunar base construction & ops",
+  mars_habitat: "Mars habitat & mission updates",
+  diplomacy: "Diplomacy, summits, treaties, sanctions",
+  quake: "Earthquakes, tsunamis, seismic activity",
+  storm: "Typhoons, hurricanes, heavy rain, floods",
+  wildfire: "Wildfires, heatwaves, drought",
+  volcano: "Volcanic eruptions, landslides",
+  energy: "Oil, gas, power, renewables supply",
+  health: "Public health, medical policy, pharma",
+  society: "Movements, protests, demographics, labor",
+  sports: "Matches, transfers, mega events",
+  education: "Schools, admissions, education policy",
+};
 const catStyle = (c: string) =>
   CATEGORY_STYLE[c] ?? "bg-secondary text-muted-foreground border-border";
 const catLabel = (c: string, lang: "ko" | "en") =>
   (lang === "ko" ? CATEGORY_LABEL_KO[c] : CATEGORY_LABEL_EN[c]) ??
   c.toUpperCase();
+const catDesc = (c: string, lang: "ko" | "en") =>
+  (lang === "ko" ? CATEGORY_DESC_KO[c] : CATEGORY_DESC_EN[c]) ?? "";
 
 const planetLocationDetailKey = (planet: Planet, code: string) =>
   [`/api/planets/${planet}/locations/${code}`] as const;
@@ -392,6 +449,7 @@ export default function Home() {
   }, [rightCollapsed]);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [streamMode, setStreamMode] = useState<"live" | "predicted">("live");
+  const [legendOpen, setLegendOpen] = useState(false);
   const [expandedForecastId, setExpandedForecastId] = useState<string | null>(
     null,
   );
@@ -1737,6 +1795,7 @@ export default function Home() {
                       <button
                         onClick={() => setCityCategory(undefined)}
                         className={`px-2 py-0.5 text-[10px] font-mono uppercase border rounded transition-colors ${!cityCategory ? "bg-primary/20 text-primary border-primary/50" : "bg-secondary text-muted-foreground border-transparent"}`}
+                        title={t("모든 카테고리", "All categories")}
                       >
                         ALL
                       </button>
@@ -1745,6 +1804,7 @@ export default function Home() {
                           key={s.category}
                           onClick={() => setCityCategory(s.category)}
                           className={`px-2 py-0.5 text-[10px] font-mono border rounded transition-colors ${cityCategory === s.category ? "bg-primary/20 text-primary border-primary/50" : "bg-secondary text-muted-foreground border-transparent"}`}
+                          title={`${catLabel(s.category, language)} — ${catDesc(s.category, language)}`}
                         >
                           {catLabel(s.category, language)}: {s.count}
                         </button>
@@ -2382,10 +2442,11 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 items-center">
             <button
               onClick={() => setSelectedCategory(undefined)}
               className={`px-2.5 py-1 text-[10px] font-mono uppercase border rounded transition-colors ${!selectedCategory ? "bg-primary/20 text-primary border-primary/50" : "bg-secondary text-muted-foreground border-transparent hover:border-border"}`}
+              title={t("모든 카테고리", "All categories")}
             >
               ALL
             </button>
@@ -2394,11 +2455,42 @@ export default function Home() {
                 key={summary.category}
                 onClick={() => setSelectedCategory(summary.category)}
                 className={`px-2.5 py-1 text-[10px] font-mono border rounded transition-colors ${selectedCategory === summary.category ? "bg-primary/20 text-primary border-primary/50" : "bg-secondary text-muted-foreground border-transparent hover:border-border"}`}
+                title={`${catLabel(summary.category, language)} — ${catDesc(summary.category, language)}`}
               >
                 {catLabel(summary.category, language)}: {summary.count}
               </button>
             ))}
+            <button
+              onClick={() => setLegendOpen((v) => !v)}
+              aria-expanded={legendOpen}
+              className={`ml-auto inline-flex items-center gap-1 px-2 py-1 text-[10px] font-mono uppercase border rounded transition-colors ${legendOpen ? "bg-primary/20 text-primary border-primary/50" : "bg-secondary text-muted-foreground border-transparent hover:border-border"}`}
+              title={t("카테고리 색상 안내", "What do the colors mean?")}
+            >
+              <Info className="w-3 h-3" />
+              {t("범례", "Legend")}
+            </button>
           </div>
+          {legendOpen && (
+            <div className="mt-2 p-2 bg-secondary/40 border border-border/50 rounded-md max-h-56 overflow-y-auto">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 px-1">
+                {t("카테고리 안내", "Category guide")}
+              </div>
+              <ul className="space-y-1">
+                {Object.keys(CATEGORY_LABEL_KO).map((c) => (
+                  <li key={c} className="flex items-start gap-2 px-1">
+                    <span
+                      className={`shrink-0 mt-0.5 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 border rounded ${catStyle(c)}`}
+                    >
+                      {catLabel(c, language)}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground leading-snug">
+                      {catDesc(c, language)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[16vh] md:max-h-[45vh]">
