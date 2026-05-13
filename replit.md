@@ -12,6 +12,7 @@ A bilingual (KO/EN) global issue map and AI-driven job future report platform. U
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
 - Required secret: `SESSION_SECRET` — HMAC key for signed auth/nonce cookies
+- Optional news stream env: `NEWS_STREAM_INTERVAL_MIN` (default 15), `NEWS_STREAM_BATCH` (default 4), `NEWS_STREAM_RETENTION_DAYS` (default 30 — streamed `issues` rows with `source_url` are pruned beyond this window; seeded items with `source_url IS NULL` are kept), `NEWS_STREAM_DISABLED=1` to disable
 - Optional PayPal env (gracefully disabled if missing): `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_WEBHOOK_ID`, `PAYPAL_ENV` (`sandbox`|`live`, default sandbox), `PAYPAL_PLAN_ID_PRO`, `PAYPAL_PLAN_ID_ENTERPRISE`
 - Optional Stripe env: secret key/publishable come from the Replit Stripe integration (no env vars needed); set `STRIPE_WEBHOOK_SECRET` for webhook signature verification, and `STRIPE_PRICE_ID_PRO` / `STRIPE_PRICE_ID_ENTERPRISE` to enable monthly subscriptions (one-time payments work without them via inline price_data)
 

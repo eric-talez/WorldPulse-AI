@@ -1,5 +1,5 @@
 import { db, issuesTable, citiesTable, countriesTable } from "@workspace/db";
-import { inArray } from "drizzle-orm";
+import { and, inArray, isNotNull, lt } from "drizzle-orm";
 import { logger } from "./logger";
 import { SEED_CITIES } from "./citiesSeed";
 
@@ -282,6 +282,36 @@ export interface NewsStreamCycleResult {
   feedsProcessed: number;
 }
 
+export interface PruneStreamedIssuesResult {
+  deleted: number;
+  retentionDays: number;
+  cutoff: Date;
+}
+
+export async function pruneStreamedIssues(): Promise<PruneStreamedIssuesResult> {
+  const raw = Number(process.env["NEWS_STREAM_RETENTION_DAYS"] ?? 30);
+  const retentionDays =
+    Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : 30;
+  const cutoff = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+  const deletedRows = await db
+    .delete(issuesTable)
+    .where(
+      and(
+        isNotNull(issuesTable.sourceUrl),
+        lt(issuesTable.publishedAt, cutoff),
+      ),
+    )
+    .returning({ id: issuesTable.id });
+  const deleted = deletedRows.length;
+  if (deleted > 0) {
+    logger.info(
+      { deleted, retentionDays, cutoff },
+      "news stream pruned aged issues",
+    );
+  }
+  return { deleted, retentionDays, cutoff };
+}
+
 export async function runNewsStreamCycle(): Promise<NewsStreamCycleResult> {
   if (running) {
     logger.info("news stream cycle already running, skipping");
@@ -402,6 +432,13 @@ export async function runNewsStreamCycle(): Promise<NewsStreamCycleResult> {
       feedsProcessed: batch.length,
     };
     logger.info({ ...result, cycleIndex }, "news stream cycle complete");
+
+    try {
+      await pruneStreamedIssues();
+    } catch (err) {
+      logger.warn({ err }, "news stream prune failed");
+    }
+
     return result;
   } finally {
     running = false;
