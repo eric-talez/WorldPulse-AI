@@ -309,7 +309,23 @@ export default function Home() {
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
   const [cityCategory, setCityCategory] = useState<string | undefined>(undefined);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem("futuremap.rightCollapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        "futuremap.rightCollapsed",
+        rightCollapsed ? "1" : "0",
+      );
+    } catch {
+      // storage unavailable (private mode, quota, etc.) — ignore
+    }
+  }, [rightCollapsed]);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [streamMode, setStreamMode] = useState<"live" | "predicted">("live");
   const [expandedForecastId, setExpandedForecastId] = useState<string | null>(
