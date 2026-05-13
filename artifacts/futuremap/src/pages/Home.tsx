@@ -713,11 +713,10 @@ export default function Home() {
       );
       viewer.scene.backgroundColor = Cesium.Color.fromCssColorString("#05070d");
       viewer.scene.globe.showGroundAtmosphere = planet === "earth";
-      // Earth uses sun-based shading so the day/night terminator reads as a
-      // real photograph; the night hemisphere is rescued by a NASA GIBS
-      // city-lights overlay (added below) plus a non-zero base nightAlpha so
-      // continents stay visible on the dark side.
-      viewer.scene.globe.enableLighting = planet === "earth";
+      // Earth is rendered fully lit (no day/night terminator) so the entire
+      // globe stays visible regardless of the sun direction. Per-user request:
+      // the dark night side made half the planet unreadable.
+      viewer.scene.globe.enableLighting = false;
 
       if (planet === "earth") {
         // Cinematic atmospherics — all free, no ion token required.
@@ -758,11 +757,10 @@ export default function Home() {
         baseLayer.saturation = 1.0;
         baseLayer.gamma = 1.0;
         if (planet === "earth") {
-          // With sun-based lighting on, dim the day-side imagery slightly on
-          // the night hemisphere so the terminator is visible but continents
-          // don't disappear into pure black.
+          // Lighting is disabled so the whole globe is lit; keep both day and
+          // night alphas at full so Cesium does not fade the back hemisphere.
           baseLayer.dayAlpha = 1.0;
-          baseLayer.nightAlpha = 0.45;
+          baseLayer.nightAlpha = 1.0;
         }
       }
 
@@ -793,36 +791,8 @@ export default function Home() {
           console.warn("Could not attach Earth label overlay:", err);
         }
 
-        // NASA GIBS VIIRS city-lights composite (2012 snapshot, public, no key).
-        // Combined with `globe.enableLighting = true`, the layer's
-        // `dayAlpha = 0` / `nightAlpha = 1` confines it to the night side, so
-        // continents glow with city lights instead of disappearing into black.
-        try {
-          const nightLightsProvider = new Cesium.UrlTemplateImageryProvider({
-            url: "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/VIIRS_CityLights_2012/default/500m/{z}/{y}/{x}.jpg",
-            tilingScheme: new Cesium.GeographicTilingScheme(),
-            tileWidth: 512,
-            tileHeight: 512,
-            maximumLevel: 8,
-            credit: "NASA GIBS / Earth Observatory",
-          });
-          if (nightLightsProvider.errorEvent) {
-            let warnedNight = false;
-            nightLightsProvider.errorEvent.addEventListener(() => {
-              if (!warnedNight) {
-                warnedNight = true;
-                console.warn("Night-lights overlay failed to load; continuing without it.");
-              }
-            });
-          }
-          const nightLayer = viewer.imageryLayers.addImageryProvider(nightLightsProvider);
-          // Only render on the night hemisphere; brighten lights a touch.
-          nightLayer.dayAlpha = 0.0;
-          nightLayer.nightAlpha = 1.0;
-          nightLayer.brightness = 1.4;
-        } catch (err) {
-          console.warn("Could not attach Earth night-lights overlay:", err);
-        }
+        // (Night-lights overlay removed — Earth is now uniformly lit so there
+        // is no night hemisphere for the city-lights layer to render on.)
 
         // Faint cloud overlay from NASA GIBS MODIS Terra true-color snapshot.
         // Clouds read as the brightest pixels in the image, so at low alpha
@@ -852,10 +822,9 @@ export default function Home() {
           cloudsLayer.alpha = 0.3;
           cloudsLayer.brightness = 1.15;
           cloudsLayer.contrast = 1.1;
-          // Slightly softer on the night side so clouds don't compete with
-          // the city-lights glow.
-          cloudsLayer.dayAlpha = 0.35;
-          cloudsLayer.nightAlpha = 0.18;
+          // Uniform across the globe — there's no terminator anymore.
+          cloudsLayer.dayAlpha = 0.3;
+          cloudsLayer.nightAlpha = 0.3;
         } catch (err) {
           console.warn("Could not attach Earth cloud overlay:", err);
         }
