@@ -713,27 +713,35 @@ export default function Home() {
       );
       viewer.scene.backgroundColor = Cesium.Color.fromCssColorString("#05070d");
       viewer.scene.globe.showGroundAtmosphere = planet === "earth";
-      // Keep sun-based shading OFF so the night hemisphere doesn't go black —
-      // users complained the far side of every planet was invisible.
-      viewer.scene.globe.enableLighting = false;
+      // Earth uses sun-based shading so the day/night terminator reads as a
+      // real photograph; the night hemisphere is rescued by a NASA GIBS
+      // city-lights overlay (added below) plus a non-zero base nightAlpha so
+      // continents stay visible on the dark side.
+      viewer.scene.globe.enableLighting = planet === "earth";
 
       if (planet === "earth") {
         // Cinematic atmospherics — all free, no ion token required.
         const scene: any = viewer.scene;
         const globe: any = scene.globe;
+        if ("dynamicAtmosphereLighting" in globe) {
+          globe.dynamicAtmosphereLighting = true;
+        }
+        if ("dynamicAtmosphereLightingFromSun" in globe) {
+          globe.dynamicAtmosphereLightingFromSun = true;
+        }
         // Atmosphere shell tint (the blue rim visible from space).
         if (scene.skyAtmosphere) {
           scene.skyAtmosphere.hueShift = -0.02;
           scene.skyAtmosphere.saturationShift = 0.15;
-          scene.skyAtmosphere.brightnessShift = 0.15;
+          scene.skyAtmosphere.brightnessShift = 0.1;
         }
         // Soft horizon fog when zoomed close.
         if (scene.fog) {
           scene.fog.enabled = true;
-          scene.fog.density = 1.5e-4;
+          scene.fog.density = 1.2e-4;
         }
-        // Bright ground atmosphere halo without going to sun-based lighting.
-        if ("atmosphereLightIntensity" in globe) globe.atmosphereLightIntensity = 14;
+        // Bright ground atmosphere halo, tuned for the lit Earth.
+        if ("atmosphereLightIntensity" in globe) globe.atmosphereLightIntensity = 12;
       }
 
       const baseLayer = viewer.imageryLayers.get(0);
@@ -746,6 +754,13 @@ export default function Home() {
         baseLayer.contrast = 1.0;
         baseLayer.saturation = 1.0;
         baseLayer.gamma = 1.0;
+        if (planet === "earth") {
+          // With sun-based lighting on, dim the day-side imagery slightly on
+          // the night hemisphere so the terminator is visible but continents
+          // don't disappear into pure black.
+          baseLayer.dayAlpha = 1.0;
+          baseLayer.nightAlpha = 0.45;
+        }
       }
 
       // Earth-only reference overlay: country borders, place names and roads from
@@ -774,6 +789,37 @@ export default function Home() {
         } catch (err) {
           console.warn("Could not attach Earth label overlay:", err);
         }
+
+        // NASA GIBS VIIRS city-lights composite (2012 snapshot, public, no key).
+        // Combined with `globe.enableLighting = true`, the layer's
+        // `dayAlpha = 0` / `nightAlpha = 1` confines it to the night side, so
+        // continents glow with city lights instead of disappearing into black.
+        try {
+          const nightLightsProvider = new Cesium.UrlTemplateImageryProvider({
+            url: "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/VIIRS_CityLights_2012/default/500m/{z}/{y}/{x}.jpg",
+            tilingScheme: new Cesium.GeographicTilingScheme(),
+            tileWidth: 512,
+            tileHeight: 512,
+            maximumLevel: 8,
+            credit: "NASA GIBS / Earth Observatory",
+          });
+          if (nightLightsProvider.errorEvent) {
+            let warnedNight = false;
+            nightLightsProvider.errorEvent.addEventListener(() => {
+              if (!warnedNight) {
+                warnedNight = true;
+                console.warn("Night-lights overlay failed to load; continuing without it.");
+              }
+            });
+          }
+          const nightLayer = viewer.imageryLayers.addImageryProvider(nightLightsProvider);
+          // Only render on the night hemisphere; brighten lights a touch.
+          nightLayer.dayAlpha = 0.0;
+          nightLayer.nightAlpha = 1.0;
+          nightLayer.brightness = 1.4;
+        } catch (err) {
+          console.warn("Could not attach Earth night-lights overlay:", err);
+        }
       }
 
       let isRotating = true;
@@ -783,6 +829,90 @@ export default function Home() {
         }
       };
       viewer.scene.preRender.addEventListener(rotateListener);
+
+      // Hide entities (pins + labels) sitting on the far side of the globe so
+      // the user no longer sees a constellation of pins bleeding through the
+      // sphere when they spin it. Selected pin is always kept visible so the
+      // user does not lose their context if they rotate after selecting.
+      const occluder = new Cesium.EllipsoidalOccluder(
+        ellipsoid,
+        viewer.camera.positionWC,
+      );
+      let lastOcclusionTime = 0;
+      let lastRealignTime = 0;
+      const isEntitySelected = (id: any): boolean => {
+        if (!id) return false;
+        if (id.cityId && id.cityId === selectedCityIdRef.current) return true;
+        if (id.countryCode && id.countryCode === selectedCountryCodeRef.current)
+          return true;
+        if (id.locationCode && id.locationCode === selectedLocationCodeRef.current)
+          return true;
+        return false;
+      };
+      // When a selected pin rotates behind the globe (e.g. user spun the
+      // planet after selecting), auto-fly the camera back to face it. This
+      // is the "selected pin must remain understandable when occluded"
+      // contract from the task spec — depth testing means we cannot just
+      // keep drawing the pin through the sphere, so we restore the user's
+      // line-of-sight instead. Debounced to 2s so we do not fight the
+      // user's own dragging.
+      const realignToSelected = (pos: any) => {
+        const now = performance.now();
+        if (now - lastRealignTime < 2000) return;
+        lastRealignTime = now;
+        const carto = Cesium.Cartographic.fromCartesian(pos, ellipsoid);
+        const lon = Cesium.Math.toDegrees(carto.longitude);
+        const lat = Cesium.Math.toDegrees(carto.latitude);
+        const height = Math.max(
+          viewer.camera.positionCartographic.height,
+          ALTITUDE_COUNTRY,
+        );
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(lon, lat, height),
+          duration: 1.0,
+        });
+      };
+      const occlusionListener = () => {
+        const now = performance.now();
+        // Throttle to ~30fps; cheap, but avoids work on every preRender frame
+        // when requestRenderMode kicks in repeatedly during a flyTo.
+        if (now - lastOcclusionTime < 33) return;
+        lastOcclusionTime = now;
+        occluder.cameraPosition = viewer.camera.positionWC;
+        const entities = viewer.entities.values;
+        let selectedHiddenPos: any = null;
+        for (let i = 0; i < entities.length; i++) {
+          const ent: any = entities[i];
+          if (!ent.position) continue;
+          const pos = ent.position.getValue
+            ? ent.position.getValue(viewer.clock.currentTime)
+            : ent.position;
+          if (!pos) continue;
+          const visible = occluder.isPointVisible(pos);
+          if (isEntitySelected(ent)) {
+            // Selected entity stays "shown" in the entity collection, but
+            // because depth testing is on, the globe will still occlude it
+            // when behind the horizon. We mark its hidden state so we can
+            // realign the camera below, and shrink/desaturate any visible
+            // chrome so it doesn't read as a duplicate when partially hit.
+            ent.show = true;
+            if (ent.point) {
+              ent.point.pixelSize = visible
+                ? ent._fmFullSize ?? ent.point.pixelSize
+                : 6;
+            }
+            if (!visible && !selectedHiddenPos) selectedHiddenPos = pos;
+            continue;
+          }
+          if (ent.show !== visible) ent.show = visible;
+        }
+        viewer.scene.requestRender();
+        // Auto-realign the camera once when the selected pin has rotated
+        // out of sight. Skipped while a flyTo is already in flight (the
+        // 2s debounce above absorbs that).
+        if (selectedHiddenPos) realignToSelected(selectedHiddenPos);
+      };
+      viewer.scene.preRender.addEventListener(occlusionListener);
 
       const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
       handler.setInputAction(() => {
@@ -848,6 +978,11 @@ export default function Home() {
           // viewer may already be destroyed
         }
         try {
+          viewer.scene.preRender.removeEventListener(occlusionListener);
+        } catch {
+          // ignore
+        }
+        try {
           handler.destroy();
         } catch {
           // ignore
@@ -879,16 +1014,15 @@ export default function Home() {
       // City pins when a country is selected and cities have loaded.
       if (selectedCountryCode && countryCities && countryCities.length > 0) {
         countryCities.forEach((city) => {
-          viewer.entities.add({
+          const ent: any = viewer.entities.add({
             id: `city-${city.id}`,
             cityId: city.id,
             position: Cesium.Cartesian3.fromDegrees(city.longitude, city.latitude),
             point: {
               pixelSize: 9,
-              color: Cesium.Color.fromCssColorString("#22d3ee").withAlpha(0.85),
+              color: Cesium.Color.fromCssColorString("#22d3ee").withAlpha(0.9),
               outlineColor: Cesium.Color.fromCssColorString("#22d3ee"),
               outlineWidth: 2,
-              disableDepthTestDistance: Number.POSITIVE_INFINITY,
             },
             label: {
               text: language === "ko" ? city.nameKo : city.name,
@@ -898,10 +1032,10 @@ export default function Home() {
               outlineWidth: 2,
               style: Cesium.LabelStyle.FILL_AND_OUTLINE,
               pixelOffset: new Cesium.Cartesian2(0, -16),
-              disableDepthTestDistance: Number.POSITIVE_INFINITY,
               scale: 0.85,
             },
           });
+          ent._fmFullSize = 9;
         });
       }
       countries.forEach((country) => {
@@ -909,7 +1043,8 @@ export default function Home() {
         if (country.riskScore > 75) colorStr = "#ef4444";
         else if (country.riskScore > 50) colorStr = "#f59e0b";
 
-        viewer.entities.add({
+        const size = 8 + country.riskScore / 20;
+        const ent: any = viewer.entities.add({
           id: `pin-${country.code}`,
           countryCode: country.code,
           position: Cesium.Cartesian3.fromDegrees(
@@ -917,14 +1052,14 @@ export default function Home() {
             country.latitude,
           ),
           point: {
-            pixelSize: 8 + country.riskScore / 20,
+            pixelSize: size,
             color:
-              Cesium.Color.fromCssColorString(colorStr).withAlpha(0.8),
+              Cesium.Color.fromCssColorString(colorStr).withAlpha(0.85),
             outlineColor: Cesium.Color.fromCssColorString(colorStr),
             outlineWidth: 2,
-            disableDepthTestDistance: Number.POSITIVE_INFINITY,
           },
         });
+        ent._fmFullSize = size;
       });
     } else if (planet !== "earth") {
       // Site (sub-location) pins when a location is selected and sites loaded.
@@ -932,16 +1067,16 @@ export default function Home() {
         countryCities.forEach((site) => {
           const tint = spaceCategoryColor(site.dominantCategory ?? null, planet);
           const count = site.signalCount ?? 0;
-          viewer.entities.add({
+          const size = 8 + Math.min(count, 6);
+          const ent: any = viewer.entities.add({
             id: `site-${site.id}`,
             cityId: site.id,
             position: Cesium.Cartesian3.fromDegrees(site.longitude, site.latitude),
             point: {
-              pixelSize: 8 + Math.min(count, 6),
-              color: Cesium.Color.fromCssColorString(tint).withAlpha(0.85),
+              pixelSize: size,
+              color: Cesium.Color.fromCssColorString(tint).withAlpha(0.9),
               outlineColor: Cesium.Color.fromCssColorString(tint),
               outlineWidth: 2,
-              disableDepthTestDistance: Number.POSITIVE_INFINITY,
             },
             label: {
               text: language === "ko" ? site.nameKo : site.name,
@@ -951,24 +1086,23 @@ export default function Home() {
               outlineWidth: 2,
               style: Cesium.LabelStyle.FILL_AND_OUTLINE,
               pixelOffset: new Cesium.Cartesian2(0, -16),
-              disableDepthTestDistance: Number.POSITIVE_INFINITY,
               scale: 0.85,
             },
           });
+          ent._fmFullSize = size;
         });
       }
       planetInfo.locations.forEach((loc) => {
         const accent = planet === "moon" ? "#cbd5f5" : "#ff7a59";
-        viewer.entities.add({
+        const ent: any = viewer.entities.add({
           id: `loc-${loc.code}`,
           locationCode: loc.code,
           position: Cesium.Cartesian3.fromDegrees(loc.longitude, loc.latitude),
           point: {
             pixelSize: 12,
-            color: Cesium.Color.fromCssColorString(accent).withAlpha(0.85),
+            color: Cesium.Color.fromCssColorString(accent).withAlpha(0.9),
             outlineColor: Cesium.Color.fromCssColorString(accent),
             outlineWidth: 2,
-            disableDepthTestDistance: Number.POSITIVE_INFINITY,
           },
           label: {
             text: language === "ko" ? loc.nameKo : loc.name,
@@ -978,10 +1112,10 @@ export default function Home() {
             outlineWidth: 2,
             style: Cesium.LabelStyle.FILL_AND_OUTLINE,
             pixelOffset: new Cesium.Cartesian2(0, -18),
-            disableDepthTestDistance: Number.POSITIVE_INFINITY,
             scale: 0.9,
           },
         });
+        ent._fmFullSize = 12;
       });
     }
   }, [globeReady, planetInfo, planet, countries, language, selectedCountryCode, selectedLocationCode, countryCities]);
@@ -1296,8 +1430,8 @@ export default function Home() {
 
       {/* Breadcrumb (click-only drilldown nav) */}
       {crumbs.length > 0 && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-[80vw] pointer-events-none">
-          <div className="bg-black/55 backdrop-blur border border-border/50 rounded-full px-3 py-1.5 flex items-center gap-1.5 pointer-events-auto overflow-x-auto whitespace-nowrap">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 max-w-[60vw] md:max-w-[55vw] pointer-events-none">
+          <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-1.5 flex items-center gap-1.5 pointer-events-auto overflow-x-auto whitespace-nowrap shadow-lg shadow-black/40">
             {crumbs.map((c, i) => (
               <React.Fragment key={i}>
                 {i > 0 && (
@@ -1320,13 +1454,15 @@ export default function Home() {
         </div>
       )}
 
-      {/* Bottom-right click-only controls (Home / Back / Zoom +/-) */}
-      <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-1.5 pointer-events-auto">
+      {/* Bottom-right click-only controls (Home / Back / Zoom +/-).
+          Anchored to the right of the signal-stream rail on desktop so the
+          buttons stay flush with the rest of the HUD chrome. */}
+      <div className="absolute bottom-4 right-4 md:right-[360px] lg:right-[410px] z-20 flex flex-col gap-1.5 pointer-events-auto">
         <button
           onClick={goHome}
           aria-label={t("처음으로", "Home")}
           title={t("처음으로", "Home")}
-          className="w-10 h-10 bg-background/80 backdrop-blur border border-border/50 rounded-md flex items-center justify-center hover:border-primary/60 hover:text-primary transition-colors text-foreground/80"
+          className="w-10 h-10 bg-black/60 backdrop-blur-md border border-white/10 rounded-md flex items-center justify-center hover:border-primary/60 hover:text-primary transition-colors text-foreground/80 shadow-lg shadow-black/40"
         >
           <HomeIcon className="w-4 h-4" />
         </button>
@@ -1340,7 +1476,7 @@ export default function Home() {
           }
           aria-label={t("뒤로", "Back")}
           title={t("뒤로", "Back")}
-          className="w-10 h-10 bg-background/80 backdrop-blur border border-border/50 rounded-md flex items-center justify-center hover:border-primary/60 hover:text-primary transition-colors text-foreground/80 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-border/50 disabled:hover:text-foreground/80"
+          className="w-10 h-10 bg-black/60 backdrop-blur-md border border-white/10 rounded-md flex items-center justify-center hover:border-primary/60 hover:text-primary transition-colors text-foreground/80 shadow-lg shadow-black/40 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-white/10 disabled:hover:text-foreground/80"
         >
           <RotateCcw className="w-4 h-4" />
         </button>
@@ -1348,7 +1484,7 @@ export default function Home() {
           onClick={() => zoomBy(0.5)}
           aria-label={t("확대", "Zoom in")}
           title={t("확대", "Zoom in")}
-          className="w-10 h-10 bg-background/80 backdrop-blur border border-border/50 rounded-md flex items-center justify-center hover:border-primary/60 hover:text-primary transition-colors text-foreground/80"
+          className="w-10 h-10 bg-black/60 backdrop-blur-md border border-white/10 rounded-md flex items-center justify-center hover:border-primary/60 hover:text-primary transition-colors text-foreground/80 shadow-lg shadow-black/40"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -1356,15 +1492,18 @@ export default function Home() {
           onClick={() => zoomBy(2)}
           aria-label={t("축소", "Zoom out")}
           title={t("축소", "Zoom out")}
-          className="w-10 h-10 bg-background/80 backdrop-blur border border-border/50 rounded-md flex items-center justify-center hover:border-primary/60 hover:text-primary transition-colors text-foreground/80"
+          className="w-10 h-10 bg-black/60 backdrop-blur-md border border-white/10 rounded-md flex items-center justify-center hover:border-primary/60 hover:text-primary transition-colors text-foreground/80 shadow-lg shadow-black/40"
         >
           <Minus className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Planet switcher */}
-      <div className="absolute top-4 right-[calc(50%-180px)] md:right-[420px] lg:right-[470px] z-20">
-        <div className="bg-black/50 backdrop-blur border border-border/50 rounded-lg p-1 flex gap-1">
+      {/* Planet switcher — anchored just inside the signal-stream rail on
+          desktop; on mobile/tablet it tucks into the top-right corner above
+          the (bottom-docked) signal stream so it never collides with the
+          centered breadcrumb. */}
+      <div className="absolute top-3 right-3 md:right-[360px] lg:right-[410px] z-20">
+        <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-lg p-1 flex gap-1 shadow-lg shadow-black/40">
           {(planets ?? []).map((p) => {
             const active = p.planet === planet;
             return (
@@ -1388,7 +1527,7 @@ export default function Home() {
       {/* Stats ribbon */}
       {stats && (
         <div className="absolute bottom-4 left-4 z-10 flex gap-2 pointer-events-none">
-          <div className="bg-background/60 backdrop-blur-md border border-border/50 px-3 py-1.5 rounded-md pointer-events-auto">
+          <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-md pointer-events-auto shadow-lg shadow-black/40">
             <div className="text-[9px] text-muted-foreground tracking-wider uppercase font-mono">
               {planet === "earth"
                 ? t("국가", "Countries")
@@ -1398,7 +1537,7 @@ export default function Home() {
               {stats.countriesTracked}
             </div>
           </div>
-          <div className="bg-background/60 backdrop-blur-md border border-border/50 px-3 py-1.5 rounded-md pointer-events-auto">
+          <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-md pointer-events-auto shadow-lg shadow-black/40">
             <div className="text-[9px] text-muted-foreground tracking-wider uppercase font-mono">
               {t("오늘 이슈", "Today")}
             </div>
@@ -1406,7 +1545,7 @@ export default function Home() {
               {stats.issuesToday}
             </div>
           </div>
-          <div className="bg-background/60 backdrop-blur-md border border-border/50 px-3 py-1.5 rounded-md pointer-events-auto hidden sm:block">
+          <div className="bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-md pointer-events-auto shadow-lg shadow-black/40 hidden sm:block">
             <div className="text-[9px] text-muted-foreground tracking-wider uppercase font-mono">
               {t("리포트", "Reports")}
             </div>
