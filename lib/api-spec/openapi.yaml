@@ -1144,6 +1144,8 @@ components:
         longitude: { type: number }
         population: { type: integer, minimum: 0 }
         importance: { type: integer, minimum: 0, maximum: 100 }
+        dominantCategory: { type: ["string", "null"] }
+        signalCount: { type: integer, minimum: 0 }
 
     CategoryCount:
       type: object

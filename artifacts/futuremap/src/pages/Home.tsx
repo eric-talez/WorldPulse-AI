@@ -113,6 +113,30 @@ const cityIssuesQueryKey = (id: string) =>
 const issueDetailQueryKey = (id: string) =>
   [`/api/issues/${id}`] as const;
 
+// Tint Moon/Mars site pins by the dominant signal category, mirroring
+// Earth's risk-tinted country pins. Falls back to the per-planet accent.
+const SPACE_CATEGORY_COLOR: Record<string, string> = {
+  ai_jobs: "#ef4444",
+  mars_habitat: "#f59e0b",
+  lunar_base: "#f59e0b",
+  space: "#22d3ee",
+  tech: "#10b981",
+  news: "#0ea5e9",
+  culture: "#a78bfa",
+  conflict: "#ef4444",
+  cyber: "#a855f7",
+  climate: "#14b8a6",
+};
+const spaceCategoryColor = (
+  category: string | null | undefined,
+  planet: Planet,
+): string => {
+  if (category && SPACE_CATEGORY_COLOR[category]) {
+    return SPACE_CATEGORY_COLOR[category];
+  }
+  return planet === "moon" ? "#cbd5f5" : "#ff7a59";
+};
+
 // Camera altitudes per drilldown level (meters)
 const ALTITUDE_COUNTRY = 1_500_000;
 const ALTITUDE_CITY = 50_000;
@@ -906,14 +930,16 @@ export default function Home() {
       // Site (sub-location) pins when a location is selected and sites loaded.
       if (selectedLocationCode && countryCities && countryCities.length > 0) {
         countryCities.forEach((site) => {
+          const tint = spaceCategoryColor(site.dominantCategory ?? null, planet);
+          const count = site.signalCount ?? 0;
           viewer.entities.add({
             id: `site-${site.id}`,
             cityId: site.id,
             position: Cesium.Cartesian3.fromDegrees(site.longitude, site.latitude),
             point: {
-              pixelSize: 9,
-              color: Cesium.Color.fromCssColorString("#22d3ee").withAlpha(0.85),
-              outlineColor: Cesium.Color.fromCssColorString("#22d3ee"),
+              pixelSize: 8 + Math.min(count, 6),
+              color: Cesium.Color.fromCssColorString(tint).withAlpha(0.85),
+              outlineColor: Cesium.Color.fromCssColorString(tint),
               outlineWidth: 2,
               disableDepthTestDistance: Number.POSITIVE_INFINITY,
             },

@@ -98,6 +98,8 @@ export const listCountryCitiesResponsePopulationMin = 0;
 export const listCountryCitiesResponseImportanceMin = 0;
 export const listCountryCitiesResponseImportanceMax = 100;
 
+export const listCountryCitiesResponseSignalCountMin = 0;
+
 export const ListCountryCitiesResponseItem = zod.object({
   id: zod.string(),
   countryCode: zod.string(),
@@ -113,6 +115,11 @@ export const ListCountryCitiesResponseItem = zod.object({
     .number()
     .min(listCountryCitiesResponseImportanceMin)
     .max(listCountryCitiesResponseImportanceMax),
+  dominantCategory: zod.string().nullish(),
+  signalCount: zod
+    .number()
+    .min(listCountryCitiesResponseSignalCountMin)
+    .optional(),
 });
 export const ListCountryCitiesResponse = zod.array(
   ListCountryCitiesResponseItem,

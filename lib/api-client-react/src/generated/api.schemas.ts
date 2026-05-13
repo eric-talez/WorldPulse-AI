@@ -104,6 +104,10 @@ export interface City {
    * @maximum 100
    */
   importance: number;
+  /** @nullable */
+  dominantCategory?: string | null;
+  /** @minimum 0 */
+  signalCount?: number;
 }
 
 export type CategoryCountCategory =
