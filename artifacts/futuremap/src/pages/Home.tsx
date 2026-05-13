@@ -721,14 +721,17 @@ export default function Home() {
       const viewer = new Cesium.Viewer(cesiumContainer.current, viewerOptions);
 
       // Cesium ion: replace Earth imagery with Bing Maps Aerial with Labels
-      // (asset 2 — real satellite photography) and enable Cesium World Terrain
-      // (asset 1 — true 3D elevation so mountains/canyons rise off the sphere).
-      // Both load asynchronously; if either fails we silently keep whatever
-      // base layer is already mounted (ESRI fallback or just the baseColor).
+      // (asset 3 — real satellite photography with country/city labels baked
+      // into the tiles) and enable Cesium World Terrain (asset 1 — true 3D
+      // elevation so mountains/canyons rise off the sphere). Both load
+      // asynchronously; if either fails we silently keep whatever base layer
+      // is already mounted (ESRI fallback or just the baseColor). NOTE:
+      // asset 2 is *pure* Bing Aerial with no labels — using it caused all
+      // country/city names to disappear.
       if (ionEnabled) {
         (async () => {
           try {
-            const provider = await Cesium.IonImageryProvider.fromAssetId(2);
+            const provider = await Cesium.IonImageryProvider.fromAssetId(3);
             if (viewer.isDestroyed()) return;
             viewer.imageryLayers.removeAll();
             const layer = viewer.imageryLayers.addImageryProvider(provider);
