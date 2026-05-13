@@ -62,6 +62,16 @@ const CATEGORY_STYLE: Record<string, string> = {
   space: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
   lunar_base: "bg-slate-300/15 text-slate-200 border-slate-300/30",
   mars_habitat: "bg-red-700/20 text-red-300 border-red-700/40",
+  diplomacy: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+  quake: "bg-orange-700/25 text-orange-300 border-orange-700/40",
+  storm: "bg-sky-600/20 text-sky-300 border-sky-600/40",
+  wildfire: "bg-red-500/25 text-red-300 border-red-500/40",
+  volcano: "bg-amber-700/25 text-amber-300 border-amber-700/40",
+  energy: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+  health: "bg-pink-500/20 text-pink-300 border-pink-500/30",
+  society: "bg-teal-500/20 text-teal-300 border-teal-500/30",
+  sports: "bg-lime-500/20 text-lime-300 border-lime-500/30",
+  education: "bg-purple-500/20 text-purple-300 border-purple-500/30",
 };
 const CATEGORY_LABEL_KO: Record<string, string> = {
   conflict: "분쟁",
@@ -79,6 +89,16 @@ const CATEGORY_LABEL_KO: Record<string, string> = {
   space: "우주",
   lunar_base: "달 기지",
   mars_habitat: "화성 거주",
+  diplomacy: "국제정세",
+  quake: "지진·쓰나미",
+  storm: "태풍·홍수",
+  wildfire: "산불·폭염",
+  volcano: "화산·산사태",
+  energy: "에너지",
+  health: "보건",
+  society: "사회",
+  sports: "스포츠",
+  education: "교육",
 };
 const CATEGORY_LABEL_EN: Record<string, string> = {
   conflict: "Conflict",
@@ -96,6 +116,16 @@ const CATEGORY_LABEL_EN: Record<string, string> = {
   space: "Space",
   lunar_base: "Lunar Base",
   mars_habitat: "Mars Habitat",
+  diplomacy: "Diplomacy",
+  quake: "Quake & Tsunami",
+  storm: "Storm & Flood",
+  wildfire: "Wildfire & Heat",
+  volcano: "Volcano & Landslide",
+  energy: "Energy",
+  health: "Health",
+  society: "Society",
+  sports: "Sports",
+  education: "Education",
 };
 const catStyle = (c: string) =>
   CATEGORY_STYLE[c] ?? "bg-secondary text-muted-foreground border-border";
@@ -126,6 +156,16 @@ const SPACE_CATEGORY_COLOR: Record<string, string> = {
   conflict: "#ef4444",
   cyber: "#a855f7",
   climate: "#14b8a6",
+  diplomacy: "#3b82f6",
+  quake: "#c2410c",
+  storm: "#0284c7",
+  wildfire: "#dc2626",
+  volcano: "#b45309",
+  energy: "#eab308",
+  health: "#ec4899",
+  society: "#14b8a6",
+  sports: "#84cc16",
+  education: "#a855f7",
 };
 const spaceCategoryColor = (
   category: string | null | undefined,

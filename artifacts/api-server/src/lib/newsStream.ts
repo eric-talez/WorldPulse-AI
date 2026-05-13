@@ -54,10 +54,38 @@ const CATEGORY_RULES: Array<{ category: string; patterns: RegExp[] }> = [
     ],
   },
   {
+    category: "quake",
+    patterns: [
+      /\b(earthquake|tsunami|seismic|aftershock|magnitude\s*\d)\b/i,
+      /지진|쓰나미|진도\s?\d|여진|규모\s?\d/,
+    ],
+  },
+  {
+    category: "storm",
+    patterns: [
+      /\b(hurricane|typhoon|flood(ing|s|ed)?|cyclone|tornado|storm surge|monsoon|torrential rain)\b/i,
+      /태풍|홍수|폭우|호우|침수|사이클론|토네이도|장마/,
+    ],
+  },
+  {
+    category: "wildfire",
+    patterns: [
+      /\b(wildfire|bushfire|brush fire|forest fire|heatwave|heat wave)\b/i,
+      /산불|들불|폭염|열파/,
+    ],
+  },
+  {
+    category: "volcano",
+    patterns: [
+      /\b(volcano|volcanic|eruption|lava flow|landslide|mudslide|rockslide)\b/i,
+      /화산|분화|산사태|토사|용암/,
+    ],
+  },
+  {
     category: "natural_disaster",
     patterns: [
-      /\b(earthquake|tsunami|hurricane|typhoon|flood|wildfire|volcano|landslide|cyclone|tornado)\b/i,
-      /지진|쓰나미|태풍|홍수|산불|화산|산사태/,
+      /\b(earthquake|tsunami|hurricane|typhoon|flood|wildfire|volcano|landslide|cyclone|tornado|natural disaster)\b/i,
+      /지진|쓰나미|태풍|홍수|산불|화산|산사태|자연재해/,
     ],
   },
   {
@@ -65,6 +93,13 @@ const CATEGORY_RULES: Array<{ category: string; patterns: RegExp[] }> = [
     patterns: [
       /\b(climate|emissions|carbon|net[- ]zero|drought|heatwave|greenhouse)\b/i,
       /기후|탄소|배출|가뭄|폭염|온실가스/,
+    ],
+  },
+  {
+    category: "health",
+    patterns: [
+      /\b(hospital|healthcare|public health|mental health|vaccine|vaccination|surgery|clinic|medicare|nhs)\b/i,
+      /병원|의료|보건|백신|접종|수술|정신건강|의료진/,
     ],
   },
   {
@@ -90,10 +125,24 @@ const CATEGORY_RULES: Array<{ category: string; patterns: RegExp[] }> = [
     ],
   },
   {
+    category: "diplomacy",
+    patterns: [
+      /\b(g7|g20|summit|diplomacy|diplomatic|treaty|sanction(s|ed)?|nato|united nations|un security council|foreign minister|bilateral|multilateral|alliance)\b/i,
+      /정상회담|G20|G7|외교|외무|조약|제재|유엔|UN|NATO|동맹|회담/,
+    ],
+  },
+  {
     category: "politics",
     patterns: [
       /\b(election|parliament|president|senate|congress|legislation|cabinet|minister|policy)\b/i,
       /대통령|총리|국회|선거|법안|장관|정책/,
+    ],
+  },
+  {
+    category: "energy",
+    patterns: [
+      /\b(oil|crude|gas pipeline|opec|electricity|power grid|power plant|nuclear plant|reactor|solar power|wind power|lng|renewable)\b/i,
+      /석유|원유|천연가스|OPEC|전력|원전|원자력|태양광|풍력|LNG|재생에너지/,
     ],
   },
   {
@@ -104,10 +153,31 @@ const CATEGORY_RULES: Array<{ category: string; patterns: RegExp[] }> = [
     ],
   },
   {
+    category: "sports",
+    patterns: [
+      /\b(olympics?|world cup|fifa|nba|nfl|mlb|premier league|champions league|football|baseball|soccer|tournament|medal)\b/i,
+      /올림픽|월드컵|NBA|MLB|프리미어리그|챔피언스리그|축구|야구|메달|결승전/,
+    ],
+  },
+  {
+    category: "education",
+    patterns: [
+      /\b(university|universities|college|school|students?|education|curriculum|tuition|exam|professor|graduation)\b/i,
+      /대학|학교|학생|교육|입시|수능|교수|졸업|커리큘럼/,
+    ],
+  },
+  {
     category: "culture",
     patterns: [
       /\b(film|movie|music|festival|museum|exhibition|concert|art|fashion)\b/i,
       /영화|음악|페스티벌|박물관|전시|콘서트|패션/,
+    ],
+  },
+  {
+    category: "society",
+    patterns: [
+      /\b(protest|rally|strike|labor union|crime|housing|homelessness|inequality|demonstration)\b/i,
+      /시위|집회|파업|노조|범죄|주거|불평등|사회/,
     ],
   },
 ];

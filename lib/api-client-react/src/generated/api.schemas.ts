@@ -64,6 +64,16 @@ export const IssueCategory = {
   space: "space",
   lunar_base: "lunar_base",
   mars_habitat: "mars_habitat",
+  diplomacy: "diplomacy",
+  quake: "quake",
+  storm: "storm",
+  wildfire: "wildfire",
+  volcano: "volcano",
+  energy: "energy",
+  health: "health",
+  society: "society",
+  sports: "sports",
+  education: "education",
 } as const;
 
 export type Planet = (typeof Planet)[keyof typeof Planet];
@@ -129,6 +139,16 @@ export const CategoryCountCategory = {
   space: "space",
   lunar_base: "lunar_base",
   mars_habitat: "mars_habitat",
+  diplomacy: "diplomacy",
+  quake: "quake",
+  storm: "storm",
+  wildfire: "wildfire",
+  volcano: "volcano",
+  energy: "energy",
+  health: "health",
+  society: "society",
+  sports: "sports",
+  education: "education",
 } as const;
 
 export interface CategoryCount {
@@ -300,6 +320,16 @@ export const ForecastEvidenceCategory = {
   space: "space",
   lunar_base: "lunar_base",
   mars_habitat: "mars_habitat",
+  diplomacy: "diplomacy",
+  quake: "quake",
+  storm: "storm",
+  wildfire: "wildfire",
+  volcano: "volcano",
+  energy: "energy",
+  health: "health",
+  society: "society",
+  sports: "sports",
+  education: "education",
 } as const;
 
 export interface ForecastEvidence {
@@ -328,6 +358,16 @@ export const ForecastCategory = {
   space: "space",
   lunar_base: "lunar_base",
   mars_habitat: "mars_habitat",
+  diplomacy: "diplomacy",
+  quake: "quake",
+  storm: "storm",
+  wildfire: "wildfire",
+  volcano: "volcano",
+  energy: "energy",
+  health: "health",
+  society: "society",
+  sports: "sports",
+  education: "education",
 } as const;
 
 export type ForecastHorizon =
@@ -748,6 +788,16 @@ export const ListIssuesCategory = {
   space: "space",
   lunar_base: "lunar_base",
   mars_habitat: "mars_habitat",
+  diplomacy: "diplomacy",
+  quake: "quake",
+  storm: "storm",
+  wildfire: "wildfire",
+  volcano: "volcano",
+  energy: "energy",
+  health: "health",
+  society: "society",
+  sports: "sports",
+  education: "education",
 } as const;
 
 export type GetIssueSummaryParams = {
@@ -796,6 +846,16 @@ export const ListForecastsCategory = {
   space: "space",
   lunar_base: "lunar_base",
   mars_habitat: "mars_habitat",
+  diplomacy: "diplomacy",
+  quake: "quake",
+  storm: "storm",
+  wildfire: "wildfire",
+  volcano: "volcano",
+  energy: "energy",
+  health: "health",
+  society: "society",
+  sports: "sports",
+  education: "education",
 } as const;
 
 export type GetForecastAccuracyParams = {

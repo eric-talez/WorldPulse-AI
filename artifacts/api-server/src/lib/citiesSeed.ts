@@ -251,4 +251,33 @@ export const SEED_CITY_ISSUES: SeedCityIssue[] = [
   { cityId: "AE-dubai", category: "economy", headline: "Dubai tokenized real-estate market crosses $5B", body: "Foreign investors lead trades." },
   // Abu Dhabi
   { cityId: "AE-abudhabi", category: "ai_jobs", headline: "아부다비 G42, 아랍어 LLM 인력 1,500명 모집", body: "역내 최대 규모 채용." },
+  // === New fine-grained categories ===
+  // diplomacy
+  { cityId: "JP-tokyo", category: "diplomacy", headline: "도쿄, 한·미·일 외교장관 회담 — 인태 안보 공동성명", body: "북한·대만 정세 공동 대응 합의." },
+  { cityId: "DE-berlin", category: "diplomacy", headline: "G20 정상회담, 베를린 임시 의장국 체제 검토", body: "AI 거버넌스가 핵심 의제." },
+  // quake
+  { cityId: "JP-osaka", category: "quake", headline: "오사카만 규모 5.8 지진 — 여진 이어져", body: "쓰나미 주의보 일부 발효." },
+  { cityId: "US-losangeles", category: "quake", headline: "LA 인근 규모 4.7 aftershock recorded along San Andreas", body: "USGS confirms seismic swarm continues." },
+  // storm
+  { cityId: "JP-fukuoka", category: "storm", headline: "후쿠오카 직격 태풍 14호 — 시간당 80mm 폭우", body: "신칸센 일부 구간 운휴." },
+  { cityId: "IN-chennai", category: "storm", headline: "Chennai monsoon flooding submerges arterial roads", body: "Schools closed, low-lying neighborhoods evacuated." },
+  // wildfire
+  { cityId: "FR-marseille", category: "wildfire", headline: "마르세유 인근 산불 확산 — 1,200명 대피", body: "폭염과 강풍이 결합." },
+  // volcano
+  { cityId: "JP-kyoto", category: "volcano", headline: "사쿠라지마 화산 분화 — 교토까지 화산재 영향", body: "항공편 일부 결항." },
+  // energy
+  { cityId: "DE-frankfurt", category: "energy", headline: "독일, LNG 수입 사상 최대 — 원전 재가동 논쟁 재점화", body: "전력 도매가 다시 상승세." },
+  { cityId: "AE-abudhabi", category: "energy", headline: "OPEC+ 추가 감산 합의 — 원유 가격 5% 급등", body: "글로벌 인플레이션 영향 우려." },
+  // health
+  { cityId: "GB-london", category: "health", headline: "NHS 런던, 대기시간 단축 위해 AI 트리아지 전면 도입", body: "응급실 평균 대기 90분 단축 목표." },
+  { cityId: "KR-seoul", category: "health", headline: "서울 빅5 병원, 정신건강 원격진료 전면 확대", body: "청년층 우울증 조기 개입." },
+  // society
+  { cityId: "FR-paris", category: "society", headline: "파리 도심 대규모 시위 — 연금 개혁 재논의 요구", body: "노조 30만 명 추산." },
+  { cityId: "US-newyork", category: "society", headline: "NYC housing protest demands rent freeze extension", body: "Tenant unions march on city hall." },
+  // sports
+  { cityId: "FR-paris", category: "sports", headline: "파리 올림픽 메달 집계 사상 최다 — 한국 5위", body: "신설 종목에서 강세." },
+  { cityId: "GB-london", category: "sports", headline: "Premier League VAR overhaul to use AI offside in 2026", body: "Trial confirmed across all clubs." },
+  // education
+  { cityId: "GB-cambridge", category: "education", headline: "케임브리지대, AI 윤리 필수 교양 신설", body: "전 학부생 이수 의무화." },
+  { cityId: "KR-daejeon", category: "education", headline: "대전 KAIST, 학부 정원 25% 확대 — AI·반도체 트랙 신설", body: "교육부 승인 절차 마무리." },
 ];
