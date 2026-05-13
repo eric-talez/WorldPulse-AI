@@ -1,0 +1,121 @@
+Implement an automatic forum cleanup system to prevent the database from becoming too heavy over time.
+
+Goal:
+Forum posts that are old and unpopular should be automatically hidden or removed, while valuable posts should stay.
+
+Please inspect the current forum-related database schema and backend/frontend code first, then implement the feature using the existing project structure.
+
+Cleanup Rules:
+A forum post should be considered “stale and unpopular” if ALL of these are true:
+
+1. The post is older than 60 days.
+2. The post has 0 comments.
+3. The post has very low engagement:
+   - 0 likes/reactions, OR
+   - view count is below 10 if the app already tracks views.
+4. The post is not pinned.
+5. The post is not an announcement/admin post.
+6. The post has not been reported or flagged for moderation review.
+7. The post is not already deleted/archived.
+
+Recommended deletion behavior:
+Do NOT immediately hard-delete posts from the database.
+
+Instead:
+1. Add a `deletedAt` or `archivedAt` column to forum posts if it does not already exist.
+2. When a post qualifies for cleanup, set `archivedAt = NOW()` or `deletedAt = NOW()`.
+3. Update the forum API queries so archived/deleted posts no longer appear in the normal forum feed.
+4. Keep archived posts in the database for admin review.
+
+Optional hard-delete:
+Add a second cleanup step that permanently deletes archived posts only after they have been archived for 30 more days.
+
+Example:
+- Post is 60+ days old and unpopular → soft archive.
+- Archived post stays hidden for 30 days.
+- After 30 days archived → permanently delete it.
+
+Scheduling:
+Create an automatic scheduled cleanup job that runs once per day, ideally at 3:00 AM server time.
+
+If the project uses Node.js:
+- Use `node-cron` or the existing scheduling system.
+- The job should run safely without blocking normal app usage.
+
+If the project uses another backend stack:
+- Use the most appropriate cron/scheduled task solution for that stack.
+
+Environment/config options:
+Please add configurable values through environment variables if possible:
+
+FORUM_CLEANUP_ENABLED=true
+FORUM_CLEANUP_POST_AGE_DAYS=60
+FORUM_CLEANUP_ARCHIVE_BEFORE_DELETE_DAYS=30
+FORUM_CLEANUP_MIN_VIEWS=10
+FORUM_CLEANUP_RUN_SCHEDULE="0 3 * * *"
+
+Backend requirements:
+1. Add a cleanup function/service, for example:
+   - `cleanupOldForumPosts()`
+   - `archiveStaleForumPosts()`
+   - `deleteOldArchivedForumPosts()`
+
+2. The cleanup function should:
+   - Find qualifying posts.
+   - Archive them safely.
+   - Log how many posts were archived.
+   - Log how many posts were permanently deleted, if hard-delete is implemented.
+   - Handle errors gracefully.
+
+3. Add database indexes if needed for performance, such as:
+   - `createdAt`
+   - `archivedAt`
+   - `deletedAt`
+   - `isPinned`
+   - forum post id used by comments
+
+4. Make sure posts with comments are never accidentally deleted.
+
+5. Make sure pinned posts and admin announcements are never deleted.
+
+Admin feature:
+If there is already an admin dashboard, add a simple admin section where archived forum posts can be viewed.
+
+Admin should be able to:
+1. View archived posts.
+2. Restore an archived post.
+3. Permanently delete an archived post manually.
+
+Frontend requirements:
+1. Normal users should not see archived/deleted posts in the forum feed.
+2. If a user opens a direct link to an archived/deleted post, show a clear message such as:
+   “This post is no longer available.”
+3. Do not break existing forum UI.
+
+Safety:
+Before making changes:
+1. Inspect the existing forum schema and API routes.
+2. Use the existing naming conventions.
+3. Do not rewrite unrelated code.
+4. Do not delete any data during development/testing unless it is clearly test data.
+5. Add console logs or server logs for cleanup results.
+
+Testing:
+Please add or verify these test cases:
+
+1. A post older than 60 days with 0 comments and 0 likes gets archived.
+2. A post older than 60 days with comments does NOT get archived.
+3. A pinned post does NOT get archived.
+4. An admin announcement does NOT get archived.
+5. A recent post does NOT get archived.
+6. Archived posts no longer appear in the forum feed.
+7. Admin can restore an archived post if admin dashboard exists.
+8. Permanently deleting archived posts only happens after the extra archive retention period.
+
+After implementation:
+Please summarize:
+1. Which files were changed.
+2. What database columns or migrations were added.
+3. How the cleanup schedule works.
+4. How I can manually test the cleanup.
+5. How I can change the retention period later.
