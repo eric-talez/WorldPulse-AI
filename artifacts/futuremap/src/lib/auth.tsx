@@ -6,6 +6,7 @@ import {
   getCreateAuthNonceUrl,
   getVerifyAuthSignatureUrl,
   getLogoutUrl,
+  getAdminMeQueryKey,
 } from "@workspace/api-client-react";
 import { requestAccounts, signMessage, WalletNotInstalledError } from "./wallet";
 
@@ -69,12 +70,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!verifyRes.ok) throw new Error(`Signature verification failed`);
     const verified = (await verifyRes.json()) as CurrentUser;
     qc.setQueryData(getGetCurrentUserQueryKey(), { user: verified });
+    // The signed-in wallet may be in ADMIN_WALLETS, which would flip the
+    // /admin/auth/me response from unauthenticated → authenticated. Force
+    // a refetch so the admin link in the header appears immediately instead
+    // of after the next staleTime window.
+    qc.invalidateQueries({ queryKey: getAdminMeQueryKey() });
     return verified;
   }, [qc]);
 
   const logout = useCallback(async () => {
     await fetch(getLogoutUrl(), { method: "POST", credentials: "include" });
     qc.setQueryData(getGetCurrentUserQueryKey(), { user: null });
+    // Disconnecting the wallet also revokes wallet-based admin elevation.
+    qc.invalidateQueries({ queryKey: getAdminMeQueryKey() });
   }, [qc]);
 
   const value = useMemo<AuthContextValue>(

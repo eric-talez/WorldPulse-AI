@@ -21,7 +21,9 @@ router.use("/admin", (req, res, next) => {
   if (req.path === "/auth/login" || req.path === "/auth/logout" || req.path === "/auth/me") {
     return next();
   }
-  return requireAdmin(req, res, next);
+  // requireAdmin is async; surface its rejection to Express so it does not
+  // turn into an unhandled promise rejection on DB hiccups.
+  void Promise.resolve(requireAdmin(req, res, next)).catch(next);
 });
 
 router.use(healthRouter);

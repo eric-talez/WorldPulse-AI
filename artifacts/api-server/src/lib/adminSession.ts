@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type { Request, Response, NextFunction } from "express";
+import { getActiveSessionWallet } from "./session";
 
 const ADMIN_COOKIE = "fm_admin";
 const ADMIN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -81,11 +82,51 @@ export function getAdminEmail(req: Request): string | null {
   return typeof data.e === "string" ? data.e : null;
 }
 
-export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
+/**
+ * Returns the lowercased set of wallet addresses that should be treated as
+ * admins. Sourced from the `ADMIN_WALLETS` env var (comma-separated). This
+ * lets a wallet user be elevated to admin without needing the email/password
+ * login flow.
+ */
+export function getAdminWallets(): Set<string> {
+  const raw = process.env["ADMIN_WALLETS"] ?? "";
+  const out = new Set<string>();
+  for (const piece of raw.split(",")) {
+    const v = piece.trim().toLowerCase();
+    if (v) out.add(v);
+  }
+  return out;
+}
+
+/**
+ * Resolves the current admin identity. Either the email-based admin session,
+ * OR a wallet session whose address is in `ADMIN_WALLETS` AND whose user
+ * record is not suspended (`getActiveSessionWallet` returns null + clears the
+ * session cookie when the wallet is deactivated, so suspended wallet users
+ * cannot retain admin privileges). Returns null when the caller is not an
+ * admin. Async because the suspension check hits the DB.
+ */
+export async function getAdminIdentity(
+  req: Request,
+  res: Response,
+): Promise<string | null> {
   const email = getAdminEmail(req);
-  if (!email) {
-    res.status(401).json({ error: "Admin authentication required" });
+  if (email) return email;
+  const adminWallets = getAdminWallets();
+  if (adminWallets.size === 0) return null;
+  const wallet = await getActiveSessionWallet(req, res);
+  if (!wallet) return null;
+  return adminWallets.has(wallet.toLowerCase()) ? wallet : null;
+}
+
+export async function requireAdmin(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  if (await getAdminIdentity(req, res)) {
+    next();
     return;
   }
-  next();
+  res.status(401).json({ error: "Admin authentication required" });
 }

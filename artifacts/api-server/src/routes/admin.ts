@@ -30,6 +30,7 @@ import {
   checkAdminCredentials,
   clearAdminSession,
   getAdminEmail,
+  getAdminIdentity,
   setAdminSession,
 } from "../lib/adminSession";
 
@@ -55,13 +56,17 @@ router.post("/admin/auth/logout", (_req, res): void => {
   res.status(204).end();
 });
 
-router.get("/admin/auth/me", (req, res): void => {
-  const email = getAdminEmail(req);
-  if (!email) {
+router.get("/admin/auth/me", async (req, res): Promise<void> => {
+  // Either the email-admin cookie OR a wallet session whose address is in
+  // ADMIN_WALLETS (and not suspended) counts as authenticated. Surface the
+  // identity (email or wallet) in the same `email` field so the existing
+  // client UI works.
+  const identity = await getAdminIdentity(req, res);
+  if (!identity) {
     res.json({ authenticated: false, email: null });
     return;
   }
-  res.json({ authenticated: true, email });
+  res.json({ authenticated: true, email: identity });
 });
 
 function ymd(d: Date): string {

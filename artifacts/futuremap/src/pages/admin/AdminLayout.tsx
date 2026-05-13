@@ -82,7 +82,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 logout.mutate(undefined, {
                   onSuccess: () => {
                     qc.invalidateQueries({ queryKey: getAdminMeQueryKey() });
-                    setLocation("/admin/login");
+                    // Wallet-admin users stay authenticated via their wallet
+                    // session even after the admin cookie is cleared, so the
+                    // /admin/login page would just bounce them straight back
+                    // here. Send everyone home instead — wallet-admins can
+                    // disconnect their wallet from the header to fully sign
+                    // out.
+                    setLocation("/");
                   },
                 });
               }}

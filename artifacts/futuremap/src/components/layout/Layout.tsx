@@ -1,12 +1,21 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { Globe } from "lucide-react";
+import { Globe, Shield } from "lucide-react";
 import { useLanguage } from "@/lib/language";
 import WalletButton from "./WalletButton";
+import { useAdminMe, getAdminMeQueryKey } from "@workspace/api-client-react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { language, setLanguage, t } = useLanguage();
+
+  // Show /admin in the header only when the current visitor is actually an
+  // admin (email-admin cookie OR a wallet listed in ADMIN_WALLETS). For
+  // everyone else the link stays hidden so the page is not even discoverable.
+  const { data: adminMe } = useAdminMe({
+    query: { staleTime: 30_000, retry: false, queryKey: getAdminMeQueryKey() },
+  });
+  const isAdmin = !!adminMe?.authenticated;
 
   const navItems = [
     { href: "/", label: t("지도", "Map") },
@@ -60,6 +69,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 EN
               </button>
             </div>
+            {isAdmin && (
+              <Link href="/admin">
+                <div
+                  className={`hidden sm:inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
+                    location.startsWith("/admin")
+                      ? "border-primary/60 text-primary bg-primary/10"
+                      : "border-border/60 text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                  }`}
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  {t("관리자", "Admin")}
+                </div>
+              </Link>
+            )}
             <WalletButton />
           </div>
         </div>
