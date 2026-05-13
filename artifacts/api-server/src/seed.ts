@@ -123,7 +123,7 @@ const SEED_REPORTS = [
   { jobName: "데이터 분석가", countryCode: "IN" },
 ];
 
-async function main(): Promise<void> {
+export async function runSeed(): Promise<void> {
   const existingCities = await db.select().from(citiesTable).limit(1);
   const existing = await db.select().from(countriesTable).limit(1);
   const existingSpaceSite = await db
@@ -190,7 +190,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log("Seed: inserting issues…");
+  console.log("Seed: inserting country issues…");
   await db.insert(issuesTable).values(
     ISSUES.map((iss, idx) => ({
       ...iss,
@@ -261,9 +261,17 @@ async function main(): Promise<void> {
   console.log("Seed: done.");
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+const isMain = (() => {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  return entry.includes("seed");
+})();
+
+if (isMain) {
+  runSeed()
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+}

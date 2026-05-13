@@ -1,6 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { startNewsStream } from "./lib/newsStream";
+import { runSeed } from "./seed";
 
 const rawPort = process.env["PORT"];
 
@@ -23,5 +24,12 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+  runSeed()
+    .then(() => {
+      logger.info("Seed: boot seed complete");
+    })
+    .catch((seedErr) => {
+      logger.error({ err: seedErr }, "Seed: boot seed failed");
+    });
   startNewsStream();
 });
