@@ -794,40 +794,8 @@ export default function Home() {
         // (Night-lights overlay removed — Earth is now uniformly lit so there
         // is no night hemisphere for the city-lights layer to render on.)
 
-        // Faint cloud overlay from NASA GIBS MODIS Terra true-color snapshot.
-        // Clouds read as the brightest pixels in the image, so at low alpha
-        // they layer convincingly over the ESRI base while continents stay
-        // dominant. Pinned to a fixed recent date so a single static snapshot
-        // is served (the task explicitly excludes time-aware tiling).
-        try {
-          const cloudsProvider = new Cesium.UrlTemplateImageryProvider({
-            url: "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2024-06-01/250m/{z}/{y}/{x}.jpg",
-            tilingScheme: new Cesium.GeographicTilingScheme(),
-            tileWidth: 512,
-            tileHeight: 512,
-            maximumLevel: 6,
-            credit: "NASA GIBS / MODIS Terra",
-          });
-          if (cloudsProvider.errorEvent) {
-            let warnedClouds = false;
-            cloudsProvider.errorEvent.addEventListener(() => {
-              if (!warnedClouds) {
-                warnedClouds = true;
-                console.warn("Cloud overlay failed to load; continuing without clouds.");
-              }
-            });
-          }
-          const cloudsLayer = viewer.imageryLayers.addImageryProvider(cloudsProvider);
-          // Subtle — clouds are the bright pixels; keep continents dominant.
-          cloudsLayer.alpha = 0.3;
-          cloudsLayer.brightness = 1.15;
-          cloudsLayer.contrast = 1.1;
-          // Uniform across the globe — there's no terminator anymore.
-          cloudsLayer.dayAlpha = 0.3;
-          cloudsLayer.nightAlpha = 0.3;
-        } catch (err) {
-          console.warn("Could not attach Earth cloud overlay:", err);
-        }
+        // (Cloud overlay removed — without sun shading it stacked on top of
+        // the ESRI base imagery and made continents look doubled/blurred.)
       }
 
       let isRotating = true;
