@@ -1,6 +1,8 @@
 import { Router, type IRouter } from "express";
 import crypto from "node:crypto";
 import { verifyMessage, isAddress } from "viem";
+import { eq } from "drizzle-orm";
+import { db, usersTable } from "@workspace/db";
 import {
   CreateAuthNonceBody,
   VerifyAuthSignatureBody,
@@ -8,7 +10,7 @@ import {
 import {
   setSession,
   clearSession,
-  getSessionWallet,
+  getActiveSessionWallet,
   setNonce,
   consumeNonce,
 } from "../lib/session";
@@ -80,7 +82,19 @@ router.post("/auth/verify", async (req, res): Promise<void> => {
     res.status(401).json({ error: "Invalid signature" });
     return;
   }
-  const user = await ensureUser(stored.walletAddress);
+  const wallet = stored.walletAddress.toLowerCase();
+  const [existing] = await db
+    .select({ deactivatedAt: usersTable.deactivatedAt, suspensionReason: usersTable.suspensionReason })
+    .from(usersTable)
+    .where(eq(usersTable.walletAddress, wallet));
+  if (existing?.deactivatedAt) {
+    res.status(403).json({
+      error: "Account suspended",
+      reason: existing.suspensionReason ?? null,
+    });
+    return;
+  }
+  const user = await ensureUser(wallet);
   setSession(res, user.walletAddress);
   const sub = await getActiveSubscription(user.walletAddress);
   res.json(buildCurrentUser(user, sub));
@@ -92,7 +106,7 @@ router.post("/auth/logout", (_req, res): void => {
 });
 
 router.get("/auth/me", async (req, res): Promise<void> => {
-  const wallet = getSessionWallet(req);
+  const wallet = await getActiveSessionWallet(req, res);
   if (!wallet) {
     res.json({ user: null });
     return;

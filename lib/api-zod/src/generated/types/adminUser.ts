@@ -18,4 +18,5 @@ export interface AdminUser {
   lastLoginAt: Date;
   deactivated: boolean;
   deactivatedAt?: Date | null;
+  suspensionReason?: string | null;
 }

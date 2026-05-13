@@ -20,6 +20,7 @@ export * from "./adminListUsersParams";
 export * from "./adminLoginInput";
 export * from "./adminSession";
 export * from "./adminSessionResponse";
+export * from "./adminSuspendUserInput";
 export * from "./adminUser";
 export * from "./adminUserCommentRef";
 export * from "./adminUserDetail";

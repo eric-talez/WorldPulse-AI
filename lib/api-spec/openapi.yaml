@@ -911,6 +911,60 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /admin/users/{walletAddress}/suspend:
+    post:
+      operationId: adminSuspendUser
+      tags: [admin]
+      summary: Suspend (deactivate) a user, optionally with a reason
+      parameters:
+        - in: path
+          name: walletAddress
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminSuspendUserInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users/{walletAddress}/reactivate:
+    post:
+      operationId: adminReactivateUser
+      tags: [admin]
+      summary: Reactivate a previously suspended user
+      parameters:
+        - in: path
+          name: walletAddress
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /admin/forum/posts:
     get:
       operationId: adminListForumPosts
@@ -1495,6 +1549,18 @@ components:
         deactivatedAt:
           oneOf:
             - { type: string, format: date-time }
+            - { type: "null" }
+        suspensionReason:
+          oneOf:
+            - { type: string }
+            - { type: "null" }
+
+    AdminSuspendUserInput:
+      type: object
+      properties:
+        reason:
+          oneOf:
+            - { type: string, maxLength: 500 }
             - { type: "null" }
 
     AdminUserPage:

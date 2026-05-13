@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 import type { Request, Response, NextFunction } from "express";
+import { eq } from "drizzle-orm";
+import { db, usersTable } from "@workspace/db";
 
 const SESSION_COOKIE = "fm_session";
 const NONCE_COOKIE = "fm_nonce";
@@ -91,10 +93,48 @@ export interface AuthedRequest extends Request {
   walletAddress: string;
 }
 
-export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+/**
+ * Resolves the current session wallet AND verifies the user is not
+ * suspended. If the user is suspended, the session cookie is cleared
+ * and `null` is returned, so subsequent requests behave as anonymous.
+ */
+export async function getActiveSessionWallet(
+  req: Request,
+  res: Response,
+): Promise<string | null> {
+  const wallet = getSessionWallet(req);
+  if (!wallet) return null;
+  const [user] = await db
+    .select({ deactivatedAt: usersTable.deactivatedAt })
+    .from(usersTable)
+    .where(eq(usersTable.walletAddress, wallet));
+  if (user?.deactivatedAt) {
+    clearSession(res);
+    return null;
+  }
+  return wallet;
+}
+
+export async function requireAuth(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
   const wallet = getSessionWallet(req);
   if (!wallet) {
     res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+  const [user] = await db
+    .select({ deactivatedAt: usersTable.deactivatedAt, suspensionReason: usersTable.suspensionReason })
+    .from(usersTable)
+    .where(eq(usersTable.walletAddress, wallet));
+  if (user?.deactivatedAt) {
+    clearSession(res);
+    res.status(403).json({
+      error: "Account suspended",
+      reason: user.suspensionReason ?? null,
+    });
     return;
   }
   (req as AuthedRequest).walletAddress = wallet;

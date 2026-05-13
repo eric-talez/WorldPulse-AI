@@ -24,6 +24,7 @@ import {
 import {
   AdminLoginBody,
   AdminListUsersQueryParams,
+  AdminSuspendUserBody,
 } from "@workspace/api-zod";
 import {
   checkAdminCredentials,
@@ -255,8 +256,43 @@ function adminUserShape(u: typeof usersTable.$inferSelect) {
     lastLoginAt: u.lastLoginAt,
     deactivated: u.deactivatedAt !== null,
     deactivatedAt: u.deactivatedAt,
+    suspensionReason: u.suspensionReason,
   };
 }
+
+router.post("/admin/users/:walletAddress/suspend", async (req, res): Promise<void> => {
+  const wallet = req.params.walletAddress.toLowerCase();
+  const parsed = AdminSuspendUserBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const reason = parsed.data.reason ?? null;
+  const [updated] = await db
+    .update(usersTable)
+    .set({ deactivatedAt: new Date(), suspensionReason: reason })
+    .where(eq(usersTable.walletAddress, wallet))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json(adminUserShape(updated));
+});
+
+router.post("/admin/users/:walletAddress/reactivate", async (req, res): Promise<void> => {
+  const wallet = req.params.walletAddress.toLowerCase();
+  const [updated] = await db
+    .update(usersTable)
+    .set({ deactivatedAt: null, suspensionReason: null })
+    .where(eq(usersTable.walletAddress, wallet))
+    .returning();
+  if (!updated) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json(adminUserShape(updated));
+});
 
 router.get("/admin/users", async (req, res): Promise<void> => {
   const parsed = AdminListUsersQueryParams.safeParse(req.query);

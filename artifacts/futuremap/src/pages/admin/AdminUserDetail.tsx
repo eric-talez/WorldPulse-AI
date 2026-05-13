@@ -1,10 +1,18 @@
 import React from "react";
 import { Link, useRoute } from "wouter";
-import { useAdminGetUser } from "@workspace/api-client-react";
+import {
+  useAdminGetUser,
+  useAdminSuspendUser,
+  useAdminReactivateUser,
+  getAdminGetUserQueryKey,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLanguage } from "@/lib/language";
 import AdminLayout from "./AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 
@@ -13,6 +21,16 @@ export default function AdminUserDetail() {
   const [, params] = useRoute<{ wallet: string }>("/admin/users/:wallet");
   const wallet = params?.wallet ?? "";
   const { data, isLoading, error } = useAdminGetUser(wallet);
+  const queryClient = useQueryClient();
+  const [reason, setReason] = React.useState("");
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: getAdminGetUserQueryKey(wallet) });
+  const suspend = useAdminSuspendUser({
+    mutation: { onSuccess: () => { setReason(""); invalidate(); } },
+  });
+  const reactivate = useAdminReactivateUser({
+    mutation: { onSuccess: () => invalidate() },
+  });
 
   return (
     <AdminLayout>
@@ -65,7 +83,7 @@ export default function AdminUserDetail() {
                     value={
                       data.user.deactivated ? (
                         <Badge variant="destructive">
-                          {t("탈퇴", "Deactivated")}
+                          {t("정지됨", "Suspended")}
                           {data.user.deactivatedAt
                             ? ` · ${format(new Date(data.user.deactivatedAt), "yyyy-MM-dd")}`
                             : ""}
@@ -75,7 +93,82 @@ export default function AdminUserDetail() {
                       )
                     }
                   />
+                  {data.user.deactivated && data.user.suspensionReason ? (
+                    <Field
+                      label={t("정지 사유", "Suspension reason")}
+                      value={
+                        <span className="text-sm whitespace-pre-wrap">
+                          {data.user.suspensionReason}
+                        </span>
+                      }
+                    />
+                  ) : null}
                 </dl>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card/50 backdrop-blur border-border">
+              <CardHeader>
+                <CardTitle className="text-base">
+                  {t("계정 모더레이션", "Account moderation")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {data.user.deactivated ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="text-sm text-muted-foreground">
+                      {t(
+                        "이 계정은 현재 정지 상태이며 로그인 및 글 작성이 차단됩니다.",
+                        "This account is currently suspended and cannot sign in or post.",
+                      )}
+                    </div>
+                    <div>
+                      <Button
+                        variant="default"
+                        disabled={reactivate.isPending}
+                        onClick={() => reactivate.mutate({ walletAddress: wallet })}
+                      >
+                        {reactivate.isPending
+                          ? t("처리 중...", "Working...")
+                          : t("계정 재활성화", "Reactivate account")}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <Textarea
+                      placeholder={t(
+                        "정지 사유 (선택사항, 최대 500자)",
+                        "Suspension reason (optional, max 500 chars)",
+                      )}
+                      value={reason}
+                      maxLength={500}
+                      onChange={(e) => setReason(e.target.value)}
+                      rows={2}
+                    />
+                    <div>
+                      <Button
+                        variant="destructive"
+                        disabled={suspend.isPending}
+                        onClick={() =>
+                          suspend.mutate({
+                            walletAddress: wallet,
+                            data: { reason: reason.trim() ? reason.trim() : null },
+                          })
+                        }
+                      >
+                        {suspend.isPending
+                          ? t("처리 중...", "Working...")
+                          : t("계정 정지", "Suspend account")}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {(suspend.error || reactivate.error) && (
+                  <div className="text-xs text-destructive">
+                    {t("작업에 실패했습니다.", "Action failed.")}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

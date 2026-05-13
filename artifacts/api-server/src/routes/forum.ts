@@ -8,7 +8,7 @@ import {
   ListForumRepliesResponse,
   CreateForumReplyBody,
 } from "@workspace/api-zod";
-import { getSessionWallet } from "../lib/session";
+import { getActiveSessionWallet } from "../lib/session";
 
 const router: IRouter = Router();
 
@@ -40,7 +40,7 @@ router.post("/forum/posts", async (req, res): Promise<void> => {
     return;
   }
   const { countryCode, author, title, body } = parsed.data;
-  const userId = getSessionWallet(req);
+  const userId = await getActiveSessionWallet(req, res);
   const [post] = await db
     .insert(forumPostsTable)
     .values({
@@ -82,7 +82,7 @@ router.post("/forum/posts/:postId/replies", async (req, res): Promise<void> => {
     return;
   }
   const { author, body, parentReplyId } = parsed.data;
-  const userId = getSessionWallet(req);
+  const userId = await getActiveSessionWallet(req, res);
   const [reply] = await db
     .insert(forumRepliesTable)
     .values({

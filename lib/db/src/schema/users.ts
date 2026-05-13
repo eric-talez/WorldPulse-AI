@@ -10,6 +10,7 @@ export const usersTable = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }).notNull().defaultNow(),
   deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
+  suspensionReason: text("suspension_reason"),
 });
 
 export type User = typeof usersTable.$inferSelect;

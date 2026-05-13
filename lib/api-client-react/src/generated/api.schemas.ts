@@ -531,6 +531,11 @@ export interface AdminUser {
   lastLoginAt: string;
   deactivated: boolean;
   deactivatedAt?: string | null;
+  suspensionReason?: string | null;
+}
+
+export interface AdminSuspendUserInput {
+  reason?: string | null;
 }
 
 export interface AdminUserPage {

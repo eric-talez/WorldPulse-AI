@@ -1152,6 +1152,7 @@ export const AdminListUsersResponse = zod.object({
       lastLoginAt: zod.coerce.date(),
       deactivated: zod.boolean(),
       deactivatedAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+      suspensionReason: zod.union([zod.string(), zod.null()]).optional(),
     }),
   ),
   total: zod.number().min(adminListUsersResponseTotalMin),
@@ -1180,6 +1181,7 @@ export const AdminGetUserResponse = zod.object({
     lastLoginAt: zod.coerce.date(),
     deactivated: zod.boolean(),
     deactivatedAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+    suspensionReason: zod.union([zod.string(), zod.null()]).optional(),
   }),
   posts: zod.array(
     zod.object({
@@ -1201,6 +1203,56 @@ export const AdminGetUserResponse = zod.object({
       deleted: zod.boolean(),
     }),
   ),
+});
+
+/**
+ * @summary Suspend (deactivate) a user, optionally with a reason
+ */
+export const AdminSuspendUserParams = zod.object({
+  walletAddress: zod.coerce.string(),
+});
+
+export const adminSuspendUserBodyReasonOneMax = 500;
+
+export const AdminSuspendUserBody = zod.object({
+  reason: zod
+    .union([zod.string().max(adminSuspendUserBodyReasonOneMax), zod.null()])
+    .optional(),
+});
+
+export const AdminSuspendUserResponse = zod.object({
+  walletAddress: zod.string(),
+  tier: zod.enum(["free", "pro", "enterprise"]),
+  email: zod.union([zod.string(), zod.null()]).optional(),
+  displayName: zod.union([zod.string(), zod.null()]).optional(),
+  age: zod.union([zod.number(), zod.null()]).optional(),
+  gender: zod.union([zod.string(), zod.null()]).optional(),
+  createdAt: zod.coerce.date(),
+  lastLoginAt: zod.coerce.date(),
+  deactivated: zod.boolean(),
+  deactivatedAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+  suspensionReason: zod.union([zod.string(), zod.null()]).optional(),
+});
+
+/**
+ * @summary Reactivate a previously suspended user
+ */
+export const AdminReactivateUserParams = zod.object({
+  walletAddress: zod.coerce.string(),
+});
+
+export const AdminReactivateUserResponse = zod.object({
+  walletAddress: zod.string(),
+  tier: zod.enum(["free", "pro", "enterprise"]),
+  email: zod.union([zod.string(), zod.null()]).optional(),
+  displayName: zod.union([zod.string(), zod.null()]).optional(),
+  age: zod.union([zod.number(), zod.null()]).optional(),
+  gender: zod.union([zod.string(), zod.null()]).optional(),
+  createdAt: zod.coerce.date(),
+  lastLoginAt: zod.coerce.date(),
+  deactivated: zod.boolean(),
+  deactivatedAt: zod.union([zod.coerce.date(), zod.null()]).optional(),
+  suspensionReason: zod.union([zod.string(), zod.null()]).optional(),
 });
 
 /**

@@ -26,6 +26,8 @@ import type {
   AdminLoginInput,
   AdminSession,
   AdminSessionResponse,
+  AdminSuspendUserInput,
+  AdminUser,
   AdminUserDetail,
   AdminUserPage,
   AdminUserStats,
@@ -3833,6 +3835,177 @@ export function useAdminGetUser<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Suspend (deactivate) a user, optionally with a reason
+ */
+export const getAdminSuspendUserUrl = (walletAddress: string) => {
+  return `/api/admin/users/${walletAddress}/suspend`;
+};
+
+export const adminSuspendUser = async (
+  walletAddress: string,
+  adminSuspendUserInput?: AdminSuspendUserInput,
+  options?: RequestInit,
+): Promise<AdminUser> => {
+  return customFetch<AdminUser>(getAdminSuspendUserUrl(walletAddress), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminSuspendUserInput),
+  });
+};
+
+export const getAdminSuspendUserMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminSuspendUser>>,
+    TError,
+    { walletAddress: string; data: BodyType<AdminSuspendUserInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminSuspendUser>>,
+  TError,
+  { walletAddress: string; data: BodyType<AdminSuspendUserInput> },
+  TContext
+> => {
+  const mutationKey = ["adminSuspendUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminSuspendUser>>,
+    { walletAddress: string; data: BodyType<AdminSuspendUserInput> }
+  > = (props) => {
+    const { walletAddress, data } = props ?? {};
+
+    return adminSuspendUser(walletAddress, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminSuspendUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminSuspendUser>>
+>;
+export type AdminSuspendUserMutationBody = BodyType<AdminSuspendUserInput>;
+export type AdminSuspendUserMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Suspend (deactivate) a user, optionally with a reason
+ */
+export const useAdminSuspendUser = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminSuspendUser>>,
+    TError,
+    { walletAddress: string; data: BodyType<AdminSuspendUserInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminSuspendUser>>,
+  TError,
+  { walletAddress: string; data: BodyType<AdminSuspendUserInput> },
+  TContext
+> => {
+  return useMutation(getAdminSuspendUserMutationOptions(options));
+};
+
+/**
+ * @summary Reactivate a previously suspended user
+ */
+export const getAdminReactivateUserUrl = (walletAddress: string) => {
+  return `/api/admin/users/${walletAddress}/reactivate`;
+};
+
+export const adminReactivateUser = async (
+  walletAddress: string,
+  options?: RequestInit,
+): Promise<AdminUser> => {
+  return customFetch<AdminUser>(getAdminReactivateUserUrl(walletAddress), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getAdminReactivateUserMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminReactivateUser>>,
+    TError,
+    { walletAddress: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminReactivateUser>>,
+  TError,
+  { walletAddress: string },
+  TContext
+> => {
+  const mutationKey = ["adminReactivateUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminReactivateUser>>,
+    { walletAddress: string }
+  > = (props) => {
+    const { walletAddress } = props ?? {};
+
+    return adminReactivateUser(walletAddress, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminReactivateUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminReactivateUser>>
+>;
+
+export type AdminReactivateUserMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Reactivate a previously suspended user
+ */
+export const useAdminReactivateUser = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminReactivateUser>>,
+    TError,
+    { walletAddress: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminReactivateUser>>,
+  TError,
+  { walletAddress: string },
+  TContext
+> => {
+  return useMutation(getAdminReactivateUserMutationOptions(options));
+};
 
 /**
  * @summary Admin — list forum posts with filters
